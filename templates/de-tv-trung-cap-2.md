@@ -1,124 +1,161 @@
-# Tiếng Việt trung cấp thấp 2 — Giao tiếp và tình huống
+# Ôn tập Từ vựng & Ngữ pháp — Bài 23
 
-> Mô tả: Đề số 2 cho người đã học khoảng 100–200 giờ, tập trung vào tình huống thực tế: hỏi đường, đặt phòng, đi khám, gọi điện. ベトナム語準中級テスト②：場面別コミュニケーション
-> Thời gian: 40
+> Mô tả: Bài ôn tập Bài 23 (Chỉ cần có một quả bóng thì…／ボールさえあれば). Gồm 2 phần: từ vựng và ngữ pháp, 20 câu, tổng 25 điểm.
+> Thời gian: 20
 > Hiện đáp án: có
 > Xáo trộn: không
-> Mở cho học viên: có
+> Mở cho học viên: không
 
-## Phần 1 — Cách nói lịch sự (敬意表現)
+## Phần 1 — Từ vựng (語彙)
 
-### [Trắc nghiệm] (1đ) Muốn nhờ người khác giúp một cách lịch sự, câu nào phù hợp nhất?
+> Hướng dẫn: Nối từ với nghĩa và điền từ thích hợp vào chỗ trống. Mỗi chỗ trống chỉ điền một từ.
 
-- Giúp tôi!
-- [x] Anh làm ơn giúp em một chút được không ạ?
-- Anh phải giúp tôi.
-- Giúp đi.
+### [Nối cặp] (4đ) Nối từ tiếng Việt với nghĩa tiếng Nhật.
 
-### [Trắc nghiệm] (1đ) Từ chối lời mời một cách lịch sự, nên nói thế nào?
+- cơ sở hạ tầng = インフラ
+- chế độ = 制度
+- tỷ suất = 比率
+- hiện tượng = 現象
+- doanh nghiệp = 企業
+- hoàn thiện = 整備する
+- nguyên nhân = 原因
+- tiền tiết kiệm = 貯金
+- ngày nghỉ phép = 休暇
+- thi đỗ = 試験に合格する
 
-- Không.
-- Tôi không muốn.
-- [x] Cảm ơn anh, nhưng tiếc quá, hôm đó em bận mất rồi.
-- Tôi ghét việc đó.
+### [Điền khuyết] (2đ) Điền từ có nghĩa「もちろん〜だ」.
 
-### [Trắc nghiệm] (1đ) "Anh cho em hỏi một chút ạ" dùng khi nào?
+> Câu: — Ở Việt Nam môn thể thao nào được hâm mộ nhất? — ___ ___ là bóng đá.
+> Đáp án: Tất | tất
+> Đáp án: nhiên
 
-- Khi chào tạm biệt.
-- [x] Khi bắt đầu hỏi ai đó điều gì.
-- Khi xin lỗi vì đến muộn.
-- Khi cảm ơn.
+### [Điền khuyết] (1đ) Điền từ có nghĩa「公表する、発表する」.
 
-### [Nhiều đáp án] (2đ) Chọn tất cả các cách nói giảm nhẹ lời chê.
+> Câu: Chính phủ Nhật Bản ___ là tỷ suất sinh năm ngoái là 1,29.
+> Đáp án: công bố
 
-- [x] Món này hơi mặn một chút.
-- Món này dở lắm.
-- [x] Cái áo này cũng được, nhưng em thấy màu kia hợp hơn.
-- Cái áo này xấu quá.
+### [Điền khuyết] (1đ) Điền từ có nghĩa「治る」.
 
-## Phần 2 — Hỏi đường (道を尋ねる)
+> Câu: Bệnh này, chỉ cần uống thuốc này là ___.
+> Đáp án: khỏi
 
-> Hướng dẫn: Đọc đoạn hội thoại rồi trả lời.
-> Bài đọc: Yuki: Chị ơi, cho em hỏi, bưu điện ở đâu ạ?
-> Người qua đường: Em đi thẳng đường này khoảng 200 mét, đến ngã tư thì rẽ
-> phải. Bưu điện nằm bên trái, đối diện siêu thị.
-> Yuki: Đi bộ có xa không chị?
-> Người qua đường: Không xa đâu, khoảng năm phút thôi.
+### [Điền khuyết] (1đ) Điền từ có nghĩa「継続する」.
 
-### [Trắc nghiệm] (1đ) Đến ngã tư thì phải làm gì?
+> Câu: Nếu tỷ suất sinh hiện nay vẫn ___ như vậy thì dân số Nhật Bản sẽ giảm.
+> Đáp án: tiếp tục
 
-- Rẽ trái
-- [x] Rẽ phải
-- Đi thẳng tiếp
-- Quay lại
+### [Điền khuyết] (1đ) Điền từ có nghĩa「握る、つかむ」.
 
-### [Trắc nghiệm] (1đ) Bưu điện nằm ở đâu?
+> Câu: Gần đây nhiều cha mẹ trẻ tuổi không dạy cách ___ đũa cho con cái.
+> Đáp án: cầm
 
-- Bên phải, cạnh siêu thị
-- [x] Bên trái, đối diện siêu thị
-- Trong siêu thị
-- Sau siêu thị
+### [Điền khuyết] (2đ) Điền từ có nghĩa「就職する」.
 
-### [Điền khuyết] (2đ) Điền từ chỉ phương hướng.
+> Câu: Sau khi tốt nghiệp đại học, anh ấy muốn ___ ___ ở một công ty Nhật Bản.
+> Đáp án: xin
+> Đáp án: việc
 
-> Câu: Anh đi ___ khoảng 100 mét rồi rẽ ___ ở đèn đỏ.
-> Đáp án: thẳng
-> Đáp án: trái | phải
+### [Điền khuyết] (3đ) Điền cụm từ có nghĩa「至る所」.
 
-### [Nối cặp] (4đ) Nối từ chỉ vị trí với nghĩa tiếng Nhật.
+> Câu: Trẻ em Việt Nam đá bóng ở ___ ___ ___.
+> Đáp án: khắp
+> Đáp án: mọi
+> Đáp án: nơi
 
-- đối diện = 向かい
-- bên cạnh = 隣
-- phía sau = 後ろ
-- giữa = 間
+## Phần 2 — Ngữ pháp (文法)
 
-## Phần 3 — Đặt phòng và đi khám (予約・病院)
+> Hướng dẫn: Chọn hoặc điền đáp án đúng nhất.
 
-### [Trắc nghiệm] (1đ) Gọi điện đặt phòng khách sạn, câu mở đầu nào tự nhiên nhất?
+### [Trắc nghiệm] (1đ) Công ty của tôi một năm có 30 ngày nghỉ phép có lương. ___ công ty của chị thì thế nào?
 
-- Tôi muốn phòng.
-- [x] Alô, em muốn đặt một phòng đôi cho hai đêm ạ.
-- Cho tôi phòng ngay.
-- Khách sạn còn phòng không, nhanh lên.
+- [x] Còn
+- Cả
+- Chỉ cần
+- Dần dần
 
-### [Trắc nghiệm] (1đ) Ở phòng khám, bác sĩ hỏi "Em thấy trong người thế nào?" — nghĩa là gì?
+> Giải thích: "Còn … thì …" dùng để chuyển chủ đề (一方〜については…).
 
-- Em bao nhiêu tuổi?
-- [x] 具合はいかがですか（Em cảm thấy sức khoẻ ra sao?）
-- Em ở đâu?
-- Em làm nghề gì?
+### [Trắc nghiệm] (1đ) ___ có một quả bóng thì ở nơi nào cũng có thể chơi được.
 
-### [Điền khuyết] (3đ) Điền từ chỉ triệu chứng.
+- Người ta nói rằng
+- [x] Chỉ cần
+- Tất nhiên là
+- Đặc biệt là
 
-> Câu: Em bị ___ đầu, hơi ___ và ___ họng từ hôm qua.
-> Đáp án: đau | nhức
-> Đáp án: sốt
-> Đáp án: đau | viêm | rát
+### [Trắc nghiệm] (1đ) ___ mùa đông Hà Nội lạnh hơn Tokyo.
 
-### [Nhiều đáp án] (2đ) Chọn tất cả câu dùng "bị" đúng ngữ pháp.
+- Nghe nói rằng người ta
+- [x] Người ta nói rằng
+- Người ta nghe là
+- Nói người ta rằng
 
-- [x] Em bị cảm hai ngày rồi.
-- [x] Xe của em bị hỏng giữa đường.
-- Em bị cô giáo khen.
-- [x] Hôm qua em bị mất ví.
+> Giải thích: Mẫu câu truyền đạt điều được nói chung: Người ta nói rằng + mệnh đề (〜と言われている).
 
-## Phần 4 — Kể lại và tường thuật (報告する)
+### [Trắc nghiệm] (1đ) Cho tôi ___ thời gian.
 
-### [Sắp xếp] (2đ) Sắp xếp thành câu tường thuật đúng.
+- nhiều dần
+- [x] một ít
+- ít dần
+- dần dần
 
-1. Chị Lan nói
-2. là hôm nay chị ấy
-3. không đến lớp được
-4. vì phải đi công tác
+> Giải thích: "một ít + danh từ" = 少しの〜. Nói về mức độ "hơi ~" thì dùng "hơi".
 
-### [Điền khuyết] (2đ) Điền từ nối thời gian.
+### [Trắc nghiệm] (1đ) Số doanh nghiệp Nhật Bản đầu tư vào nước A ngày càng ___.
 
-> Câu: ___ khi đến Việt Nam, tôi chưa từng ăn bún đậu. ___ đó thì tuần nào tôi cũng ăn.
-> Đáp án: Trước
-> Đáp án: Sau
+- một ít
+- [x] ít dần
+- ít nhất
+- nhiều lên
 
-### [Trả lời ngắn] (1đ) Hoàn thành câu: "Nếu hôm nay trời không mưa thì tôi ___ ." (viết tiếp 2–5 từ)
+### [Điền khuyết] (2đ) Điền "cả" và "cũng" vào đúng vị trí.
 
-<!-- Không có đáp án cố định — giáo viên chấm tay. -->
+> Câu: Hôm qua anh Bình đi chơi Shinjuku. → ___ hôm nay anh Bình ___ đi chơi Shinjuku.
+> Đáp án: Cả | cả
+> Đáp án: cũng
 
-### [Tự luận] (4đ) Viết khoảng 100 từ kể lại một lần em gặp khó khăn khi dùng tiếng Việt (ở chợ, bệnh viện, hay khi hỏi đường) và em đã xử lý thế nào.
+### [Điền khuyết] (2đ) Điền hai từ để hỏi chuyển chủ đề.
+
+> Câu: Mùa hè Tokyo rất nóng. ___ mùa hè Hà Nội ___ thế nào?
+> Đáp án: Còn | còn
+> Đáp án: thì
+
+### [Điền khuyết] (1đ) Điền từ thích hợp (vế sau ngắn).
+
+> Câu: Luận văn của tôi, chỉ cần viết một trang nữa ___ xong.
+> Đáp án: là
+
+> Giải thích: Khi vế sau ngắn, "thì" được thay bằng "là".
+
+### [Đúng/Sai] (1đ) Trong câu "Cả ở Nhật Bản bóng đá cũng được hâm mộ", từ "cả" đứng trước thành phần được nhấn mạnh.
+
+> Đáp án: Đúng
+
+### [Đúng/Sai] (1đ) Từ "cũng" luôn đứng ngay TRƯỚC chủ ngữ.
+
+> Đáp án: Sai
+
+> Giải thích: "cũng" luôn đứng ngay SAU chủ ngữ, khác vị trí với "～も" trong tiếng Nhật.
+
+### [Nhiều đáp án] (2đ) Chọn tất cả các câu đúng ngữ pháp.
+
+- [x] Cả hôm nay anh Bình cũng đi chơi Shinjuku.
+- Cũng cả hôm nay anh Bình đi chơi Shinjuku.
+- [x] Thời gian còn lại rất ít.
+- Cho tôi nhiều ít thời gian.
+- [x] Chỉ cần nhận được tiền là được.
+
+### [Sắp xếp] (2đ) Sắp xếp thành câu đúng.
+
+1. Chỉ cần
+2. uống thuốc này
+3. thì
+4. anh ấy
+5. sẽ khỏi bệnh
+
+### [Sắp xếp] (2đ) Sắp xếp thành câu đúng.
+
+1. Người ta nói rằng
+2. nước ta
+3. cần hoàn thiện
+4. cơ sở hạ tầng
+5. hơn nữa
