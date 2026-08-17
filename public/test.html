@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Đang làm bài</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Be+Vietnam+Pro:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="examhead">
+  <h1 id="title">Đang tải…</h1>
+  <span id="timer" class="timer hidden"></span>
+  <button class="sm ghost hidden" id="exit">Thoát</button>
+</header>
+
+<div class="wrap">
+  <div id="info" class="hidden"></div>
+  <div id="body"></div>
+
+  <div id="footer" class="card hidden">
+    <div class="row" id="submitRow">
+      <span class="muted small grow" id="progress"></span>
+      <button class="primary" id="submit">Nộp bài</button>
+    </div>
+
+    <!-- Xác nhận ngay trong trang: không phụ thuộc hộp thoại của trình duyệt -->
+    <div id="confirmBox" class="notice hidden" style="margin-top:var(--space-md)">
+      <p id="confirmText" style="margin-bottom:var(--space-sm)"></p>
+      <div class="row">
+        <button class="primary" id="confirmYes">Nộp bài</button>
+        <button id="confirmNo">Quay lại làm tiếp</button>
+      </div>
+    </div>
+
+    <div id="submitErr" class="notice err hidden" style="margin-top:var(--space-md)">
+      <p id="submitErrText" style="margin-bottom:var(--space-sm)"></p>
+      <div class="row">
+        <button class="primary" id="retry">Thử nộp lại</button>
+        <span class="small">Câu trả lời của bạn vẫn được giữ nguyên trên trang này.</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="result"></div>
+</div>
+
+<div id="exitBox" class="dialog hidden" role="dialog" aria-modal="true" aria-labelledby="exitTitle">
+  <div class="panel">
+    <h3 id="exitTitle">Thoát khỏi bài thi?</h3>
+    <p class="muted">Những câu đã làm nhưng chưa nộp sẽ không được lưu.</p>
+    <div class="row">
+      <button class="primary" id="exitNo">Ở lại làm bài</button>
+      <button class="danger" id="exitYes">Thoát, không nộp</button>
+    </div>
+  </div>
+</div>
+
+<footer class="colophon">
+  <span class="mark">Phòng thi</span>
+  <span>Giữ trang này mở cho tới khi nộp bài.</span>
+</footer>
+
+<script>
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const $ = id => document.getElementById(id);
+const testId = new URLSearchParams(location.search).get('id');
+const student = JSON.parse(sessionStorage.getItem('student') || '{}');
+if (!student.name) location.href = 'index.html';
+
+const answers = {};      // qid -> đáp án
+const audioPlays = {};   // sectionId -> số lần đã nghe
+let test = null, startedAt = new Date().toISOString(), timerInt = null, submitted = false, remainingSec = 0;
+
+fetch('/api/tests/' + testId).then(r => r.json()).then(t => {
+  if (t.error) { $('body').innerHTML = `<div class="card notice err">${esc(t.error)}</div>`; return; }
+  test = t;
+  render();
+});
+
+function render() {
+  $('title').textContent = test.title;
+  $('info').classList.remove('hidden');
+  $('info').innerHTML = `
+    ${test.description ? `<p class="lede">${esc(test.description)}</p>` : ''}
+    <p class="small muted">Thí sinh: <strong>${esc(student.name)}</strong>${student.cls ? ' · Lớp ' + esc(student.cls) : ''}</p>`;
+
+  $('body').innerHTML = test.sections.map(renderSection).join('');
+  $('footer').classList.remove('hidden');
+  wire();
+  updateProgress();
+
+  if (test.timeLimitMin) startTimer(test.timeLimitMin * 60);
+
+  $('submit').onclick = () => {
+    const left = test.sections.flatMap(s => s.questions).filter(q => !isAnswered(q)).length;
+    if (!left) return submit();
+    $('confirmText').textContent =
+      `Bạn còn ${left} câu chưa làm. Nộp bài bây giờ thì những câu đó tính 0 điểm.`;
+    $('confirmBox').classList.remove('hidden');
+    $('submit').disabled = true;
+    $('confirmYes').focus();
+  };
+  $('confirmNo').onclick = () => {
+    $('confirmBox').classList.add('hidden');
+    $('submit').disabled = false;
+  };
+  $('confirmYes').onclick = () => { $('confirmBox').classList.add('hidden'); submit(); };
+  $('retry').onclick = () => { $('submitErr').classList.add('hidden'); submit(); };
+
+  /* Thoát giữa chừng */
+  $('exit').classList.remove('hidden');
+  $('exit').onclick = () => {
+    $('exitBox').classList.remove('hidden');
+    $('exitNo').focus();
+  };
+  $('exitNo').onclick = () => $('exitBox').classList.add('hidden');
+  $('exitBox').onclick = (e) => { if (e.target.id === 'exitBox') $('exitNo').click(); };
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !$('exitBox').classList.contains('hidden')) $('exitNo').click();
+  });
+  $('exitYes').onclick = () => { submitted = true; location.href = 'index.html'; };
+}
+
+function renderSection(s) {
+  const audio = s.audio && s.audio.url ? `
+    <div class="audio-box" data-section="${s.id}">
+      <div class="row">
+        <button type="button" class="play primary">Phát bài nghe</button>
+        <span class="small">Còn <strong class="plays">${s.audio.maxPlays || 1}</strong> lượt nghe</span>
+      </div>
+      <p class="small muted" style="margin-top:var(--space-xs)">Không tua được. Hết lượt, nút phát sẽ khoá.</p>
+      <audio class="au" src="${esc(s.audio.url)}" preload="auto"></audio>
+    </div>` : '';
+  const passage = s.passage ? `<div class="passage">${formatPassage(s.passage)}</div>` : '';
+  return `<div class="card">
+    <h2>${esc(s.title || 'Phần thi')}</h2>
+    ${s.instructions ? `<p class="muted small">${esc(s.instructions)}</p>` : ''}
+    ${audio}${passage}
+    ${s.questions.map((q, i) => renderQuestion(q, i + 1)).join('')}
+  </div>`;
+}
+
+/* Bài đọc: xuống dòng đơn trong tệp nguồn chỉ là chỗ ngắt dòng khi soạn thảo,
+   không phải ngắt dòng thật — gộp lại thành đoạn văn chảy tự nhiên.
+   Dòng trống (hoặc dòng bắt đầu bằng "A:", "B:" trong hội thoại) mới tách đoạn. */
+function formatPassage(text) {
+  const isDialogue = /^\s*[A-ZĐ][\wÀ-ỹ ]{0,14}:\s/m.test(text);
+  const paragraphs = String(text)
+    .split(/\n\s*\n/)
+    .map(block => isDialogue
+      ? block.split('\n').map(l => l.trim()).filter(Boolean)
+          .reduce((lines, line) => {
+            if (/^[A-ZĐ][\wÀ-ỹ ]{0,14}:\s/.test(line)) lines.push(line);
+            else if (lines.length) lines[lines.length - 1] += ' ' + line;
+            else lines.push(line);
+            return lines;
+          }, [])
+      : [block.split('\n').map(l => l.trim()).join(' ')])
+    .flat()
+    .filter(Boolean);
+  return paragraphs.map(p => `<p>${esc(p)}</p>`).join('');
+}
+
+function renderQuestion(q, n) {
+  const head = `<div class="prompt">Câu ${n}. ${esc(q.prompt)} <span class="muted small">(${q.points || 1} điểm)</span></div>`;
+  let body = '';
+  switch (q.type) {
+    case 'multiple_choice': {
+      const type = q.multiple ? 'checkbox' : 'radio';
+      body = (q.options || []).map(o => `<label class="opt">
+        <input type="${type}" name="q_${q.id}" value="${o.id}" data-q="${q.id}" data-kind="mc">
+        <span>${esc(o.text)}</span></label>`).join('')
+        + (q.multiple ? '<p class="small muted">Có thể chọn nhiều đáp án.</p>' : '');
+      break;
+    }
+    case 'true_false':
+      body = ['true', 'false'].map(v => `<label class="opt">
+        <input type="radio" name="q_${q.id}" value="${v}" data-q="${q.id}" data-kind="tf">
+        <span>${v === 'true' ? 'Đúng' : 'Sai'}</span></label>`).join('');
+      break;
+    case 'fill_blank': {
+      const n = (q.blanks || []).length || (q.prompt.match(/_{2,}/g) || []).length || 1;
+      let i = 0;
+      const text = esc(q.text || q.prompt).replace(/_{2,}/g, () =>
+        `<input type="text" class="blank" data-q="${q.id}" data-kind="fb" data-i="${i++}">`);
+      body = `<div>${i ? text : Array.from({ length: n }, (_, k) =>
+        `<input type="text" class="blank" data-q="${q.id}" data-kind="fb" data-i="${k}" placeholder="Chỗ trống ${k + 1}">`).join(' ')}</div>`;
+      break;
+    }
+    case 'short_answer':
+      body = `<input type="text" data-q="${q.id}" data-kind="sa" placeholder="Câu trả lời của bạn">`;
+      break;
+    case 'essay':
+      body = `<textarea data-q="${q.id}" data-kind="sa" rows="6" placeholder="Viết bài của bạn tại đây"></textarea>`;
+      break;
+    case 'matching':
+      body = (q.left || []).map(l => `<div class="row" style="margin-bottom:6px">
+        <span class="grow">${esc(l.text)}</span>
+        <select data-q="${q.id}" data-kind="match" data-left="${l.id}" style="max-width:280px">
+          <option value="">— chọn —</option>
+          ${(q.right || []).map(r => `<option value="${r.id}">${esc(r.text)}</option>`).join('')}
+        </select></div>`).join('');
+      break;
+    case 'ordering':
+      body = `<div class="order" data-q="${q.id}">` + (q.items || []).map((it, i) =>
+        `<div class="dragitem" data-id="${it.id}">
+           <span class="ord">${i + 1}</span><span class="grow">${esc(it.text)}</span>
+           <button type="button" class="sm ghost up">↑</button>
+           <button type="button" class="sm ghost down">↓</button>
+         </div>`).join('') + '</div><p class="small muted">Dùng ↑ ↓ để sắp xếp đúng thứ tự.</p>';
+      break;
+    default:
+      body = '<p class="muted small">Dạng câu hỏi không hỗ trợ.</p>';
+  }
+  return `<div class="q" id="qq_${q.id}">${head}${body}</div>`;
+}
+
+function wire() {
+  // câu trả lời
+  document.querySelectorAll('[data-kind]').forEach(el => {
+    const q = el.dataset.q, kind = el.dataset.kind;
+    const handler = () => {
+      if (kind === 'mc') {
+        const boxes = [...document.querySelectorAll(`input[name="q_${q}"]:checked`)].map(x => x.value);
+        answers[q] = boxes;
+      } else if (kind === 'tf') {
+        answers[q] = el.value;
+      } else if (kind === 'fb') {
+        const arr = answers[q] || [];
+        arr[Number(el.dataset.i)] = el.value;
+        answers[q] = arr;
+      } else if (kind === 'sa') {
+        answers[q] = el.value;
+      } else if (kind === 'match') {
+        const m = answers[q] || {};
+        m[el.dataset.left] = el.value;
+        answers[q] = m;
+      }
+      updateProgress();
+    };
+    el.addEventListener('change', handler);
+    el.addEventListener('input', handler);
+  });
+
+  // sắp xếp thứ tự
+  document.querySelectorAll('.order').forEach(box => {
+    const sync = () => {
+      [...box.children].forEach((c, i) => c.querySelector('.ord').textContent = i + 1);
+      answers[box.dataset.q] = [...box.children].map(c => c.dataset.id);
+      updateProgress();
+    };
+    box.addEventListener('click', e => {
+      const item = e.target.closest('.dragitem'); if (!item) return;
+      if (e.target.classList.contains('up') && item.previousElementSibling)
+        box.insertBefore(item, item.previousElementSibling);
+      else if (e.target.classList.contains('down') && item.nextElementSibling)
+        box.insertBefore(item.nextElementSibling, item);
+      else return;
+      sync();
+    });
+  });
+
+  // bài nghe: giới hạn số lần phát, không cho tua
+  document.querySelectorAll('.audio-box').forEach(box => {
+    const sid = box.dataset.section;
+    const section = test.sections.find(s => s.id === sid);
+    const au = box.querySelector('.au');
+    const btn = box.querySelector('.play');
+    const left = box.querySelector('.plays');
+    let remaining = section.audio.maxPlays || 1;
+    audioPlays[sid] = 0;
+
+    btn.onclick = () => {
+      if (remaining <= 0) return;
+      remaining--; audioPlays[sid]++;
+      left.textContent = remaining;
+      btn.disabled = true; btn.textContent = 'Đang phát…';
+      au.currentTime = 0; au.play();
+    };
+    au.onended = () => {
+      btn.textContent = remaining > 0 ? 'Nghe lại' : 'Đã hết lượt nghe';
+      btn.disabled = remaining <= 0;
+    };
+    au.onerror = () => { btn.disabled = true; btn.textContent = 'Không tải được tệp âm thanh'; };
+  });
+}
+
+function isAnswered(q) {
+  const a = answers[q.id];
+  if (a == null) return false;
+  if (Array.isArray(a)) return a.some(x => x !== undefined && String(x).trim() !== '');
+  if (typeof a === 'object') return Object.values(a).some(v => v);
+  return String(a).trim() !== '';
+}
+
+function updateProgress() {
+  const qs = test.sections.flatMap(s => s.questions);
+  const done = qs.filter(isAnswered).length;
+  $('progress').textContent = `Đã làm ${done}/${qs.length} câu`;
+}
+
+function startTimer(sec) {
+  clearInterval(timerInt);
+  const el = $('timer'); el.classList.remove('hidden');
+  const tick = () => {
+    remainingSec = sec;
+    const m = Math.floor(sec / 60), s = sec % 60;
+    el.textContent = `${m}:${String(s).padStart(2, '0')}`;
+    el.classList.toggle('low', sec <= 60);
+    if (sec-- <= 0) {
+      clearInterval(timerInt);
+      el.textContent = 'Hết giờ';
+      $('confirmBox').classList.add('hidden');
+      submit();
+    }
+  };
+  tick(); timerInt = setInterval(tick, 1000);
+}
+
+async function submit() {
+  if (submitted) return;
+  submitted = true;
+  clearInterval(timerInt);
+  $('submitErr').classList.add('hidden');
+  $('submit').disabled = true;
+  $('submit').textContent = 'Đang nộp…';
+
+  const fail = (msg) => {
+    /* Mở khoá để học viên nộp lại — bài làm vẫn nằm nguyên trong trang. */
+    submitted = false;
+    $('submit').disabled = false;
+    $('submit').textContent = 'Nộp bài';
+    $('submitErrText').textContent = msg;
+    $('submitErr').classList.remove('hidden');
+    if (test.timeLimitMin && remainingSec > 0) startTimer(remainingSec);
+  };
+
+  let r;
+  try {
+    const resp = await fetch('/api/submit', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        testId, studentName: student.name, studentClass: student.cls,
+        answers, startedAt, audioPlays,
+        durationSec: Math.round((Date.now() - new Date(startedAt)) / 1000),
+      }),
+    });
+    r = await resp.json();
+  } catch {
+    return fail('Không gửi được bài — có vẻ mất kết nối tới máy chủ. Kiểm tra mạng rồi bấm “Thử nộp lại”.');
+  }
+  if (!r || r.error) return fail(r && r.error ? r.error : 'Máy chủ trả về dữ liệu không hợp lệ.');
+  showResult(r);
+}
+
+function showResult(r) {
+  $('body').classList.add('hidden');
+  $('footer').classList.add('hidden');
+  $('timer').classList.add('hidden');
+  $('exitBox').classList.add('hidden');
+  $('exit').classList.add('hidden');
+  const detail = r.key ? `<div class="card"><h3>Đáp án</h3>${r.key.map(k => {
+    const d = r.details[k.id] || {};
+    const mark = d.correct === true ? '<span class="correct">✔ Đúng</span>'
+      : d.correct === false ? '<span class="wrong">✘ Sai</span>'
+      : '<span class="review">Chờ giáo viên chấm</span>';
+    return `<div class="q"><div class="prompt">${esc(k.prompt)} — ${mark}
+      <span class="muted small">(${d.earned ?? 0}/${d.max ?? 0} điểm)</span></div>
+      ${keyText(k)}${k.explanation ? `<p class="small muted">Giải thích: ${esc(k.explanation)}</p>` : ''}</div>`;
+  }).join('')}</div>` : '';
+
+  $('result').innerHTML = `
+    <div class="card">
+      <p class="small muted">Kết quả của ${esc(student.name)}</p>
+      <div class="stat-row">
+        <div class="stat"><div class="label">Điểm</div><div class="figure">${r.score}<span class="muted" style="font-size:.5em">/${r.maxScore}</span></div></div>
+        <div class="stat"><div class="label">Tỉ lệ đúng</div><div class="figure">${r.percent}%</div></div>
+      </div>
+      <p class="muted">${r.needsReview
+        ? 'Một số câu cần giáo viên chấm tay — điểm ở trên là phần chấm tự động.'
+        : 'Bài đã được chấm xong.'} Kết quả đã lưu lại cho giáo viên.</p>
+      <div class="row">
+        <a href="index.html"><button class="primary">Về trang chủ</button></a>
+        ${r.key ? '<span class="small muted">Đáp án chi tiết ở ngay bên dưới.</span>' : ''}
+      </div>
+    </div>${detail}
+    <div class="card" style="text-align:center">
+      <a href="index.html"><button>Về trang chủ</button></a>
+    </div>`;
+  window.scrollTo(0, 0);
+}
+
+function keyText(k) {
+  if (k.type === 'multiple_choice')
+    return `<p class="small muted">Đáp án đúng: ${esc([].concat(k.correct || [])
+      .map(id => ((k.options || []).find(o => o.id === id) || {}).text || id).join(', '))}</p>`;
+  if (k.type === 'true_false')
+    return `<p class="small muted">Đáp án đúng: ${k.correct === 'true' ? 'Đúng' : 'Sai'}</p>`;
+  if (k.type === 'matching')
+    return `<p class="small muted">Đáp án: ${esc(Object.entries(k.pairs || {}).map(([l, r]) =>
+      `${((k.left || []).find(x => x.id === l) || {}).text} → ${((k.right || []).find(x => x.id === r) || {}).text}`).join('; '))}</p>`;
+  if (k.type === 'fill_blank')
+    return `<p class="small muted">Đáp án: ${(k.blanks || []).map(b => esc((b.answers || []).join(' / '))).join(' | ')}</p>`;
+  if (k.type === 'short_answer')
+    return `<p class="small muted">Đáp án: ${esc((k.answers || []).join(' / '))}</p>`;
+  if (k.type === 'ordering')
+    return `<p class="small muted">Thứ tự đúng: ${(k.items || []).map(i => esc(i.text)).join(' → ')}</p>`;
+  return '';
+}
+</script>
+</body>
+</html>

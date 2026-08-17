@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phòng thi — chọn đề</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Be+Vietnam+Pro:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="bar">
+    <h1 class="wordmark">Phòng thi</h1>
+    <nav class="links">
+      <a href="admin.html">Dành cho giáo viên</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+  <p class="lede">Chọn một đề bên dưới. Bạn sẽ ghi tên ở bước tiếp theo.</p>
+  <div id="list" class="pick-list"></div>
+</div>
+
+<footer class="colophon">
+  <span class="mark">Phòng thi</span>
+  <span>Kết quả được lưu lại cho giáo viên phụ trách.</span>
+</footer>
+
+<!-- Bước 2: ghi tên rồi bắt đầu -->
+<div id="startBox" class="dialog hidden" role="dialog" aria-modal="true" aria-labelledby="startTitle">
+  <div class="panel">
+    <p class="small muted">Bạn sắp làm bài</p>
+    <h3 id="startTitle"></h3>
+    <p class="small muted" id="startMeta"></p>
+    <label class="field" style="margin-top:var(--space-lg)"><span>Họ và tên</span>
+      <input type="text" id="startName" autocomplete="name" placeholder="Ví dụ: Tanaka Yuki"></label>
+    <p id="startErr" class="notice err hidden" style="margin-bottom:var(--space-md)">Vui lòng nhập họ và tên.</p>
+    <div class="row">
+      <button class="primary" id="startGo">Bắt đầu làm bài</button>
+      <button id="startCancel">Chọn đề khác</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let chosen = null;
+
+fetch('/api/tests').then(r => r.json()).then(tests => {
+  if (!tests.length) {
+    $('list').innerHTML = '<p class="muted">Hiện chưa có đề nào được mở.</p>';
+    return;
+  }
+  $('list').innerHTML = tests.map((t, i) => `
+    <button type="button" class="pick" data-i="${i}">
+      <span class="num">${String(i + 1).padStart(2, '0')}</span>
+      <span class="body">
+        <span class="name">${esc(t.title)}</span>
+        ${t.description ? `<span class="desc">${esc(t.description)}</span>` : ''}
+        <span class="meta">${t.questionCount} câu<span class="sep">·</span>${
+          t.timeLimitMin ? t.timeLimitMin + ' phút' : 'không giới hạn thời gian'}</span>
+      </span>
+      <span class="arrow" aria-hidden="true">→</span>
+    </button>`).join('');
+
+  $('list').querySelectorAll('.pick').forEach(btn => btn.onclick = () => {
+    chosen = tests[Number(btn.dataset.i)];
+    $('startTitle').textContent = chosen.title;
+    $('startMeta').textContent = `${chosen.questionCount} câu · ${
+      chosen.timeLimitMin ? chosen.timeLimitMin + ' phút' : 'không giới hạn thời gian'}`;
+    $('startErr').classList.add('hidden');
+    $('startBox').classList.remove('hidden');
+    $('startName').value = localStorage.getItem('tenHocVien') || '';
+    $('startName').focus();
+  });
+});
+
+const close = () => { $('startBox').classList.add('hidden'); chosen = null; };
+$('startCancel').onclick = close;
+$('startBox').onclick = e => { if (e.target.id === 'startBox') close(); };
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !$('startBox').classList.contains('hidden')) close();
+});
+$('startName').onkeydown = e => { if (e.key === 'Enter') $('startGo').click(); };
+
+$('startGo').onclick = () => {
+  const name = $('startName').value.trim();
+  if (!name) { $('startErr').classList.remove('hidden'); $('startName').focus(); return; }
+  localStorage.setItem('tenHocVien', name);   /* đỡ phải gõ lại khi làm đề tiếp theo */
+  sessionStorage.setItem('student', JSON.stringify({ name }));
+  location.href = 'test.html?id=' + chosen.id;
+};
+</script>
+</body>
+</html>

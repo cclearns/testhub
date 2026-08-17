@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Phòng thi">
+  <!-- Khối bo tròn màu xanh biển — đủ đậm để nhận ra ở 16px -->
+  <rect x="3" y="3" width="58" height="58" rx="18" fill="#0C5D7B"/>
+
+  <!-- Má hồng -->
+  <circle cx="14.5" cy="40" r="5.5" fill="#F20231" opacity=".9"/>
+  <circle cx="49.5" cy="40" r="5.5" fill="#F20231" opacity=".9"/>
+
+  <!-- Mắt -->
+  <circle cx="23" cy="27" r="5" fill="#F8E4CC"/>
+  <circle cx="41" cy="27" r="5" fill="#F8E4CC"/>
+
+  <!-- Miệng cười -->
+  <path d="M22 40 q10 10 20 0" fill="none" stroke="#F8E4CC" stroke-width="5" stroke-linecap="round"/>
+</svg>

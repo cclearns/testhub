@@ -1,0 +1,1674 @@
+[
+  {
+    "title": "Tiếng Việt sơ cấp 2 — Số đếm, thời gian và mua sắm",
+    "description": "Đề số 2 dành cho sinh viên Nhật học tiếng Việt sơ cấp. ベトナム語初級テスト②：数字・時間・買い物",
+    "timeLimitMin": 30,
+    "published": true,
+    "showResultDetail": true,
+    "shuffleQuestions": false,
+    "sections": [
+      {
+        "id": "f9fc9709",
+        "title": "Phần 1 — Số đếm (数字)",
+        "instructions": "",
+        "passage": "",
+        "audio": null,
+        "questions": [
+          {
+            "id": "7da8d574",
+            "type": "multiple_choice",
+            "multiple": false,
+            "prompt": "Số 15 đọc là gì?",
+            "points": 1,
+            "explanation": "Từ 15 trở đi, \"năm\" đổi thành \"lăm\". 15、25、35… は \"lăm\" になります。",
+            "options": [
+              {
+                "id": "86c54005",
+                "text": "mười năm"
+              },
+              {
+                "id": "204ae9b6",
+                "text": "mười lăm"
+              },
+              {
+                "id": "5d69d9f7",
+                "text": "một năm"
+              },
+              {
+                "id": "47d3a675",
+                "text": "năm mươi"
+              }
+            ],
+            "correct": [
+              "204ae9b6"
+            ]
+          },
+          {
+            "id": "1a7fbe01",
+            "type": "multiple_choice",
+            "multiple": false,
+            "prompt": "Số 21 đọc là gì?",
+            "points": 1,
+            "explanation": "Số 1 ở hàng đơn vị sau 20 đọc là \"mốt\".",
+            "options": [
+              {
+                "id": "4ce78c22",
+                "text": "hai mươi một"
+              },
+              {
+                "id": "8b1a81bb",
+                "text": "hai mươi mốt"
+              },
+              {
+                "id": "626ecd4b",
+                "text": "hai một"
+              },
+              {
+                "id": "a4dd0e9b",
+                "text": "hai mươi"
+              }
+            ],
+            "correct": [
+              "8b1a81bb"
+            ]
+          },
+          {
+            "id": "59b6a05b",
+            "type": "fill_blank",
+            "prompt": "Viết số bằng chữ.",
+            "points": 2,
+            "explanation": "",
+            "text": "30 = ba ___ ; 100 = một ___",
+            "blanks": [
+              {
+                "answers": [
+                  "mươi"
+                ],
+                "caseSensitive": false
+              },
+              {
+                "answers": [
+                  "trăm"
+                ],
+                "caseSensitive": false
+              }
+            ]
+          },
+          {
+            "id": "d06e3051",
+            "type": "matching",
+            "prompt": "Nối số với cách đọc.",
+            "points": 3,
+            "explanation": "",
+            "left": [
+              {
+                "id": "def9baae",
+                "text": "4"
+              },
+              {
+                "id": "c0b62aac",
+                "text": "7"
+              },
+              {
+                "id": "5ff51f16",
+                "text": "10"
+              }
+            ],
+            "right": [
+              {
+                "id": "48431c8d",
+                "text": "bốn"
+              },
+              {
+                "id": "143efb39",
+                "text": "bảy"
+              },
+              {
+                "id": "3268b8f3",
+                "text": "mười"
+              }
+            ],
+            "pairs": {
+              "def9baae": "48431c8d",
+              "c0b62aac": "143efb39",
+              "5ff51f16": "3268b8f3"
+            }
+          }
+        ]
+      },
+      {
+        "id": "7ab6d22e",
+        "title": "Phần 2 — Thời gian (時間・曜日)",
+        "instructions": "",
+        "passage": "",
+        "audio": null,
+        "questions": [
+          {
+            "id": "bce3c5e8",
+            "type": "multiple_choice",
+            "multiple": false,
+            "prompt": "\"Thứ hai\" là thứ mấy trong tuần?",
+            "points": 1,
+            "explanation": "",
+            "options": [
+              {
+                "id": "aa4974d8",
+                "text": "月曜日"
+              },
+              {
+                "id": "22d9cc68",
+                "text": "火曜日"
+              },
+              {
+                "id": "2ab7cf44",
+                "text": "日曜日"
+              },
+              {
+                "id": "9deebf2b",
+                "text": "土曜日"
+              }
+            ],
+            "correct": [
+              "aa4974d8"
+            ]
+          },
+          {
+            "id": "e4bf4ea7",
+            "type": "multiple_choice",
+            "multiple": false,
+            "prompt": "\"Bây giờ là mấy giờ?\" nghĩa là gì?",
+            "points": 1,
+            "explanation": "",
+            "options": [
+              {
+                "id": "0186bef1",
+                "text": "Hôm nay là thứ mấy?"
+              },
+              {
+                "id": "60fd310b",
+                "text": "Bây giờ mấy giờ rồi?（今何時ですか）"
+              },
+              {
+                "id": "303c0ea2",
+                "text": "Bao nhiêu tiền?"
+              },
+              {
+                "id": "f675e54d",
+                "text": "Bạn bao nhiêu tuổi?"
+              }
+            ],
+            "correct": [
+              "60fd310b"
+            ]
+          },
+          {
+            "id": "84e1ca85",
+            "type": "true_false",
+            "prompt": "\"Chủ nhật\" là ngày cuối tuần.",
+            "points": 1,
+            "explanation": "",
+            "correct": "true"
+          },
+          {
+            "id": "978e77ca",
+            "type": "fill_blank",
+            "prompt": "Điền từ chỉ buổi trong ngày.",
+            "points": 2,
+            "explanation": "",
+            "text": "7 giờ ___ tôi ăn sáng. 8 giờ ___ tôi đi ngủ.",
+            "blanks": [
+              {
+                "answers": [
+                  "sáng"
+                ],
+                "caseSensitive": false
+              },
+              {
+                "answers": [
+                  "tối"
+                ],
+                "caseSensitive": false
+              }
+            ]
+          },
+          {
+            "id": "27bc6e69",
+            "type": "ordering",
+            "prompt": "Sắp xếp thành câu hỏi đúng.",
+            "points": 2,
+            "explanation": "",
+            "items": [
+              {
+                "id": "0a729b74",
+                "text": "Hôm nay"
+              },
+              {
+                "id": "461b8ed7",
+                "text": "là"
+              },
+              {
+                "id": "50de1439",
+                "text": "thứ mấy"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "d628ff81",
+        "title": "Phần 3 — Mua sắm (買い物)",
+        "instructions": "Đọc đoạn hội thoại rồi trả lời.",
+        "passage": "A: Chị ơi, cái áo này bao nhiêu tiền ạ?\nB: Hai trăm nghìn đồng em ạ.\nA: Đắt quá! Bớt một chút được không chị?\nB: Ừ, một trăm tám mươi nghìn nhé.",
+        "audio": null,
+        "questions": [
+          {
+            "id": "1bd9033a",
+            "type": "multiple_choice",
+            "multiple": false,
+            "prompt": "Người mua hỏi về cái gì?",
+            "points": 1,
+            "explanation": "",
+            "options": [
+              {
+                "id": "81bc6e98",
+                "text": "Cái áo"
+              },
+              {
+                "id": "a4069e7c",
+                "text": "Cái mũ"
+              },
+              {
+                "id": "c70b3fc5",
+                "text": "Đôi giày"
+              },
+              {
+                "id": "c114d744",
+                "text": "Quyển sách"
+              }
+            ],
+            "correct": [
+              "81bc6e98"
+            ]
+          },
+          {
+            "id": "3efe4471",
+            "type": "short_answer",
+            "prompt": "Cuối cùng giá là bao nhiêu nghìn đồng? (chỉ viết số)",
+            "points": 1,
+            "explanation": "",
+            "answers": [
+              "180"
+            ],
+            "caseSensitive": false
+          },
+          {
+            "id": "7ab13f0a",
+            "type": "multiple_choice",
+            "multiple": false,
+            "prompt": "\"Đắt quá!\" nghĩa là gì?",
+            "points": 1,
+            "explanation": "",
+            "options": [
+              {
+                "id": "5e0a5234",
+                "text": "Rẻ quá!"
+              },
+              {
+                "id": "6458b081",
+                "text": "高すぎます！"
+              },
+              {
+                "id": "15cccc5f",
+                "text": "Đẹp quá!"
+              },
+              {
+                "id": "9e0525df",
+                "text": "Không có."
+              }
+            ],
+            "correct": [
+              "6458b081"
+            ]
+          },
+          {
+            "id": "94eeca3e",
+            "type": "multiple_choice",
+            "multiple": true,
+            "prompt": "Chọn tất cả các câu dùng được khi đi chợ.",
+            "points": 2,
+            "explanation": "",
+            "options": [
+              {
+                "id": "1c45582d",
+                "text": "Cái này bao nhiêu tiền?"
+              },
+              {
+                "id": "674d79df",
+                "text": "Bớt một chút được không?"
+              },
+              {
+                "id": "b995b585",
+                "text": "Tôi tên là Yuki."
+              },
+              {
+                "id": "289e95ec",
+                "text": "Cho tôi cái này."
+              }
+            ],
+            "correct": [
+              "1c45582d",
+              "674d79df",
+              "289e95ec"
+            ]
+          },
+          {
+            "id": "f7509ccc",
+            "type": "essay",
+            "prompt": "Viết một đoạn hội thoại ngắn (4–6 câu) khi em đi mua hoa quả ở chợ.",
+            "points": 3,
+            "explanation": ""
+          }
+        ]
+      }
+    ],
+    "id": "be16d9532d65b100",
+    "createdAt": "2026-08-16T14:07:53.019Z",
+    "updatedAt": "2026-08-16T14:51:24.369Z"
+  },
+  {
+    "title": "Tiếng Việt sơ cấp 3 — Thanh điệu và phát âm",
+    "description": "Đề luyện thanh điệu, nguyên âm và phụ âm — phần khó nhất với người Nhật. ベトナム語初級テスト③：声調と発音",
+    "timeLimitMin": 25,
+    "published": true,
+    "showResultDetail": true,
+    "shuffleQuestions": false,
+    "sections": [
+      {
+        "id": "5a9e490a",
+        "title": "Phần 1 — Sáu thanh điệu (6つの声調)",
+        "instructions": "Tiếng Việt có 6 thanh: ngang, huyền, sắc, hỏi, ngã, nặng.",
+        "passage": "",
+        "audio": null,
+        "questions": [
+          {
+            "id": "b5dc5c30",
+            "type": "multiple_choice",
+            "multiple": false,
+            "prompt": "Chữ \"má\" mang thanh gì?",
+            "points": 1,
+            "explanation": "",
+            "options": [
+              {
+                "id": "d4803477",
+                "text": "thanh ngang"
+              },
+              {
+                "id": "3e9520bf",
+                "text": "thanh huyền"
+              },
+              {
+                "id": "f62f9838",
+                "text": "thanh sắc"
+              },
+              {
+                "id": "13cad7b6",
+                "text": "thanh nặng"
+              }
+            ],
+            "correct": [
+              "f62f9838"
+            ]
+          },
+          {
+            "id": "6f800b14",
+            "type": "multiple_choice",
+            "multiple": false,
+            "prompt": "Chữ \"mà\" mang thanh gì?",
+            "points": 1,
+            "explanation": "",
+            "options": [
+              {
+                "id": "8ad5b9ed",
+                "text": "thanh sắc"
+              },
+              {
+                "id": "f9bc4639",
+                "text": "thanh huyền"
+              },
+              {
+                "id": "6f0f0438",
+                "text": "thanh hỏi"
+              },
+              {
+                "id": "08c17d3c",
+                "text": "thanh ngã"
+              }
+            ],
+            "correct": [
+              "f9bc4639"
+            ]
+          },
+          {
+            "id": "ef9eeb10",
+            "type": "matching",
+            "prompt": "Nối chữ với nghĩa tiếng Nhật.",
+            "points": 5,
+            "explanation": "",
+            "left": [
+              {
+                "id": "47740340",
+                "text": "ma"
+              },
+              {
+                "id": "1dc7dbac",
+                "text": "má"
+              },
+              {
+                "id": "5a3ecbcd",
+                "text": "mà"
+              },
+              {
+                "id": "f5946b35",
+                "text": "mả"
+              },
+              {
+                "id": "698250c5",
+                "text": "mạ"
+              }
+            ],
+            "right": [
+              {
+                "id": "8caab648",
+                "text": "幽霊"
+              },
+              {
+                "id": "a1040a60",
+                "text": "母（南部）・頬"
+              },
+              {
+                "id": "3538c79c",
+                "text": "しかし"
+              },
+              {
+                "id": "feb0da7c",
+                "text": "墓"
+              },
+              {
+                "id": "a1828a01",
+                "text": "稲の苗"
+              }
+            ],
+            "pairs": {
+              "47740340": "8caab648",
+              "1dc7dbac": "a1040a60",
+              "5a3ecbcd": "3538c79c",
+              "f5946b35": "feb0da7c",
+              "698250c5": "a1828a01"
+            }
+          },
+          {
+            "id": "e4b79915",
+            "type": "true_false",
+            "prompt": "Thay đổi thanh điệu thì nghĩa của từ cũng thay đổi.",
+            "points": 1,
+            "explanation": "Đây là điểm khác biệt lớn so với tiếng Nhật. 声調が変わると意味も変わります。",
+            "correct": "true"
+          },
+          {
+            "id": "8595cb81",
+            "type": "multiple_choice",
+            "multiple": true,
+            "prompt": "Chọn tất cả các từ mang thanh nặng (dấu chấm dưới).",
+            "points": 2,
+            "explanation": "",
+            "options": [
+              {
+                "id": "97616fec",
+                "text": "học"
+              },
+              {
+                "id": "c3777ba3",
+                "text": "bàn"
+              },
+              {
+                "id": "f0ca5749",
+                "text": "đẹp"
+              },
+              {
+                "id": "179a4248",
+                "text": "cà phê"
+              },
+              {
+                "id": "2f6b1b90",
+                "text": "một"
+              }
+            ],
+            "correct": [
+              "97616fec",
+              "f0ca5749",
+              "2f6b1b90"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "02508675",
+        "title": "Phần 2 — Nguyên âm và phụ âm (母音・子音)",
+        "instructions": "",
+        "passage": "",
+        "audio": null,
+        "questions": [
+          {
+            "id": "8beabb4d",
+            "type": "multiple_choice",
+            "multiple": false,
+            "prompt": "Cặp âm nào người Nhật thường nhầm nhất?",
+            "points": 1,
+            "explanation": "",
+            "options": [
+              {
+                "id": "cfe46c8c",
+                "text": "b và c"
+              },
+              {
+                "id": "7a90207d",
+                "text": "ư và u"
+              },
+              {
+                "id": "5c7907d2",
+                "text": "m và n"
+              },
+              {
+                "id": "ae26e311",
+                "text": "h và k"
+              }
+            ],
+            "correct": [
+              "7a90207d"
+            ]
+          },
+          {
+            "id": "f5f9b60f",
+            "type": "fill_blank",
+            "prompt": "Điền chữ cái còn thiếu.",
+            "points": 2,
+            "explanation": "",
+            "text": "ng___ời Nhật (người) · t___ tiếng Việt (từ)",
+            "blanks": [
+              {
+                "answers": [
+                  "ư"
+                ],
+                "caseSensitive": false
+              },
+              {
+                "answers": [
+                  "ừ"
+                ],
+                "caseSensitive": false
+              }
+            ]
+          },
+          {
+            "id": "d5c4411c",
+            "type": "multiple_choice",
+            "multiple": false,
+            "prompt": "Từ \"cảm ơn\" có mấy âm tiết?",
+            "points": 1,
+            "explanation": "",
+            "options": [
+              {
+                "id": "bec3733d",
+                "text": "một"
+              },
+              {
+                "id": "cbbde741",
+                "text": "hai"
+              },
+              {
+                "id": "3b289a9c",
+                "text": "ba"
+              },
+              {
+                "id": "f737a40f",
+                "text": "bốn"
+              }
+            ],
+            "correct": [
+              "cbbde741"
+            ]
+          },
+          {
+            "id": "109951b9",
+            "type": "ordering",
+            "prompt": "Sắp xếp các âm tiết thành từ đúng: \"sinh viên\".",
+            "points": 2,
+            "explanation": "",
+            "items": [
+              {
+                "id": "2c06dd97",
+                "text": "sinh"
+              },
+              {
+                "id": "f7584197",
+                "text": "viên"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "42945533",
+        "title": "Phần 3 — Nghe và phân biệt (聞き分け)",
+        "instructions": "Nếu giáo viên đã tải tệp nghe lên, hãy nghe rồi trả lời. Nếu chưa có tệp nghe, giáo viên sẽ đọc trực tiếp.",
+        "passage": "",
+        "audio": null,
+        "questions": [
+          {
+            "id": "32dca70e",
+            "type": "short_answer",
+            "prompt": "Viết lại từ em nghe được (có dấu): /bàn/",
+            "points": 1,
+            "explanation": "",
+            "answers": [
+              "bàn"
+            ],
+            "caseSensitive": false
+          },
+          {
+            "id": "58605650",
+            "type": "short_answer",
+            "prompt": "Viết lại từ em nghe được (có dấu): /bán/",
+            "points": 1,
+            "explanation": "",
+            "answers": [
+              "bán"
+            ],
+            "caseSensitive": false
+          },
+          {
+            "id": "49257e47",
+            "type": "essay",
+            "prompt": "Hãy giải thích bằng tiếng Việt đơn giản: \"bàn\" và \"bán\" khác nhau thế nào?",
+            "points": 2,
+            "explanation": ""
+          }
+        ]
+      }
+    ],
+    "id": "82e14210ebb56935",
+    "createdAt": "2026-08-16T14:07:53.021Z",
+    "updatedAt": "2026-08-16T14:51:24.371Z"
+  },
+  {
+    "title": "Tiếng Việt trung cấp thấp 1 — Ngữ pháp và đọc hiểu",
+    "description": "Dành cho người đã học khoảng 100–200 giờ (tương đương A2). ベトナム語準中級テスト①：文法と読解",
+    "timeLimitMin": 45,
+    "published": true,
+    "showResultDetail": true,
+    "shuffleQuestions": false,
+    "sections": [
+      {
+        "id": "5b848095",
+        "title": "Phần 1 — Loại từ và trật tự từ (類別詞・語順)",
+        "instructions": "Chọn đáp án đúng nhất cho mỗi câu.",
+        "passage": "",
+        "audio": null,
+        "questions": [
+          {
+            "id": "757798cf",
+            "type": "multiple_choice",
+            "multiple": false,
+            "prompt": "Chọn loại từ đúng: Tôi mua hai ___ sách.",
+            "points": 1,
+            "explanation": "Sách dùng \"quyển\" hoặc \"cuốn\". 本には quyển / cuốn を使います。",
+            "options": [
+              {
+                "id": "5750fcf3",
+                "text": "cái"
+              },
+              {
+                "id": "6bb8b893",
+                "text": "con"
+              },
+              {
+                "id": "57e8b0d6",
+                "text": "quyển"
+              },
+              {
+                "id": "ac3c3920",
+                "text": "chiếc"
+              }
+            ],
+            "correct": [
+              "57e8b0d6"
+            ]
+          },
+          {
+            "id": "47ca3b78",
+            "type": "multiple_choice",
+            "multiple": false,
+            "prompt": "Chọn loại từ đúng: Nhà tôi nuôi một ___ mèo.",
+            "points": 1,
+            "explanation": "",
+            "options": [
+              {
+                "id": "cb323c41",
+                "text": "cái"
+              },
+              {
+                "id": "46715f95",
+                "text": "con"
+              },
+              {
+                "id": "dc2642a2",
+                "text": "quả"
+              },
+              {
+                "id": "58e36b85",
+                "text": "chiếc"
+              }
+            ],
+            "correct": [
+              "46715f95"
+            ]
+          },
+          {
+            "id": "c4da8e80",
+            "type": "multiple_choice",
+            "multiple": false,
+            "prompt": "Câu nào đúng trật tự từ?",
+            "points": 1,
+            "explanation": "Trong tiếng Việt, tính từ đứng sau danh từ — ngược với tiếng Nhật.",
+            "options": [
+              {
+                "id": "c871eea8",
+                "text": "Tôi có một áo mới đẹp."
+              },
+              {
+                "id": "083be809",
+                "text": "Tôi có một chiếc áo mới rất đẹp."
+              },
+              {
+                "id": "311931e2",
+                "text": "Tôi có đẹp một chiếc áo mới."
+              },
+              {
+                "id": "d93467c0",
+                "text": "Một chiếc áo mới tôi có đẹp."
+              }
+            ],
+            "correct": [
+              "083be809"
+            ]
+          },
+          {
+            "id": "36a81bbd",
+            "type": "multiple_choice",
+            "multiple": true,
+            "prompt": "Chọn tất cả các câu đúng ngữ pháp.",
+            "points": 2,
+            "explanation": "",
+            "options": [
+              {
+                "id": "defcfc62",
+                "text": "Đây là quyển từ điển mà tôi mượn hôm qua."
+              },
+              {
+                "id": "b94432a2",
+                "text": "Đây là tôi mượn hôm qua quyển từ điển."
+              },
+              {
+                "id": "d330e169",
+                "text": "Chiếc xe máy này đắt hơn chiếc kia."
+              },
+              {
+                "id": "320776b0",
+                "text": "Chiếc xe máy này hơn đắt chiếc kia."
+              }
+            ],
+            "correct": [
+              "defcfc62",
+              "d330e169"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ea8c5617",
+        "title": "Phần 2 — Thì và trạng từ chỉ thời gian (時制・時の副詞)",
+        "instructions": "",
+        "passage": "",
+        "audio": null,
+        "questions": [
+          {
+            "id": "515c5113",
+            "type": "fill_blank",
+            "prompt": "Điền \"đã\", \"đang\" hoặc \"sẽ\".",
+            "points": 3,
+            "explanation": "",
+            "text": "Hôm qua tôi ___ đi Hà Nội. Bây giờ tôi ___ học bài. Ngày mai tôi ___ về Nhật.",
+            "blanks": [
+              {
+                "answers": [
+                  "đã"
+                ],
+                "caseSensitive": false
+              },
+              {
+                "answers": [
+                  "đang"
+                ],
+                "caseSensitive": false
+              },
+              {
+                "answers": [
+                  "sẽ"
+                ],
+                "caseSensitive": false
+              }
+            ]
+          },
+          {
+            "id": "8bb98260",
+            "type": "multiple_choice",
+            "multiple": false,
+            "prompt": "\"Tôi vừa ăn cơm xong\" nghĩa là gì?",
+            "points": 1,
+            "explanation": "",
+            "options": [
+              {
+                "id": "2d7443ef",
+                "text": "Tôi sắp ăn cơm."
+              },
+              {
+                "id": "0f870752",
+                "text": "Tôi mới ăn cơm xong （ちょうど食べ終わったところ）"
+              },
+              {
+                "id": "75d5acae",
+                "text": "Tôi đang ăn cơm."
+              },
+              {
+                "id": "a4bf7dbd",
+                "text": "Tôi chưa ăn cơm."
+              }
+            ],
+            "correct": [
+              "0f870752"
+            ]
+          },
+          {
+            "id": "3fa4a7dd",
+            "type": "multiple_choice",
+            "multiple": false,
+            "prompt": "Chọn câu có nghĩa \"まだ〜していない\".",
+            "points": 1,
+            "explanation": "",
+            "options": [
+              {
+                "id": "c8f48ea7",
+                "text": "Tôi đã đi Huế rồi."
+              },
+              {
+                "id": "ec2c3c36",
+                "text": "Tôi chưa đi Huế bao giờ."
+              },
+              {
+                "id": "82b3614c",
+                "text": "Tôi không đi Huế."
+              },
+              {
+                "id": "781aac2d",
+                "text": "Tôi sắp đi Huế."
+              }
+            ],
+            "correct": [
+              "ec2c3c36"
+            ]
+          },
+          {
+            "id": "94e5e8dc",
+            "type": "true_false",
+            "prompt": "\"Tôi đi Việt Nam hai năm rồi\" có nghĩa là bây giờ tôi vẫn đang ở Việt Nam.",
+            "points": 1,
+            "explanation": "\"…rồi\" ở đây diễn tả trạng thái kéo dài đến hiện tại.",
+            "correct": "true"
+          }
+        ]
+      },
+      {
+        "id": "351efbb3",
+        "title": "Phần 3 — Liên từ và câu phức (接続詞・複文)",
+        "instructions": "",
+        "passage": "",
+        "audio": null,
+        "questions": [
+          {
+            "id": "d506eae9",
+            "type": "fill_blank",
+            "prompt": "Điền cặp liên từ thích hợp.",
+            "points": 2,
+            "explanation": "",
+            "text": "___ trời mưa to ___ tôi vẫn đi làm.",
+            "blanks": [
+              {
+                "answers": [
+                  "Tuy",
+                  "Mặc dù",
+                  "Dù"
+                ],
+                "caseSensitive": false
+              },
+              {
+                "answers": [
+                  "nhưng"
+                ],
+                "caseSensitive": false
+              }
+            ]
+          },
+          {
+            "id": "a1410482",
+            "type": "fill_blank",
+            "prompt": "Điền cặp liên từ chỉ nguyên nhân – kết quả.",
+            "points": 2,
+            "explanation": "",
+            "text": "___ bị ốm ___ hôm qua Yuki không đến lớp.",
+            "blanks": [
+              {
+                "answers": [
+                  "Vì",
+                  "Bởi vì",
+                  "Do"
+                ],
+                "caseSensitive": false
+              },
+              {
+                "answers": [
+                  "nên"
+                ],
+                "caseSensitive": false
+              }
+            ]
+          },
+          {
+            "id": "f82d9428",
+            "type": "multiple_choice",
+            "multiple": false,
+            "prompt": "Chọn câu dùng \"được\" đúng nghĩa may mắn / tích cực.",
+            "points": 1,
+            "explanation": "Việc tốt dùng \"được\", việc xấu dùng \"bị\". よいことは được、悪いことは bị。",
+            "options": [
+              {
+                "id": "ed424125",
+                "text": "Tôi được cô giáo khen."
+              },
+              {
+                "id": "932bcf0c",
+                "text": "Tôi được phạt vì đi muộn."
+              },
+              {
+                "id": "9b88b7cb",
+                "text": "Tôi được mất ví."
+              },
+              {
+                "id": "1147d033",
+                "text": "Tôi được ốm ba ngày."
+              }
+            ],
+            "correct": [
+              "ed424125"
+            ]
+          },
+          {
+            "id": "85c5d41e",
+            "type": "matching",
+            "prompt": "Nối vế câu cho hợp nghĩa.",
+            "points": 3,
+            "explanation": "",
+            "left": [
+              {
+                "id": "41fa3daa",
+                "text": "Nếu ngày mai trời đẹp"
+              },
+              {
+                "id": "f29df355",
+                "text": "Càng học tiếng Việt"
+              },
+              {
+                "id": "3f056be5",
+                "text": "Tôi không những thích phở"
+              }
+            ],
+            "right": [
+              {
+                "id": "19a6a7bb",
+                "text": "thì chúng ta đi Vịnh Hạ Long."
+              },
+              {
+                "id": "3f4ee5a8",
+                "text": "tôi càng thấy thú vị."
+              },
+              {
+                "id": "e96a65d2",
+                "text": "mà còn thích bún chả."
+              }
+            ],
+            "pairs": {
+              "41fa3daa": "19a6a7bb",
+              "f29df355": "3f4ee5a8",
+              "3f056be5": "e96a65d2"
+            }
+          }
+        ]
+      },
+      {
+        "id": "7362574a",
+        "title": "Phần 4 — Đọc hiểu (読解)",
+        "instructions": "Đọc đoạn văn rồi trả lời các câu hỏi bên dưới.",
+        "passage": "Minh là sinh viên năm thứ ba, quê ở Đà Nẵng. Hai năm trước, anh lên Hà Nội học đại học. Lúc mới lên, anh thấy Hà Nội vừa đông vừa ồn, mùa đông lại lạnh hơn quê anh nhiều nên anh khá nhớ nhà. Bây giờ thì khác rồi: anh có nhiều bạn, cuối tuần thường đi thư viện hoặc đạp xe quanh Hồ Tây. Anh nói tuy Hà Nội không yên tĩnh như Đà Nẵng nhưng ở đây anh học được nhiều thứ mà ở quê anh không có.",
+        "audio": null,
+        "questions": [
+          {
+            "id": "dba58c83",
+            "type": "multiple_choice",
+            "multiple": false,
+            "prompt": "Minh quê ở đâu?",
+            "points": 1,
+            "explanation": "",
+            "options": [
+              {
+                "id": "9adc1864",
+                "text": "Hà Nội"
+              },
+              {
+                "id": "245a8cca",
+                "text": "Đà Nẵng"
+              },
+              {
+                "id": "a7ed8c32",
+                "text": "Huế"
+              },
+              {
+                "id": "2c550d5f",
+                "text": "Hồ Chí Minh"
+              }
+            ],
+            "correct": [
+              "245a8cca"
+            ]
+          },
+          {
+            "id": "8e3a800b",
+            "type": "multiple_choice",
+            "multiple": false,
+            "prompt": "Vì sao lúc mới lên Hà Nội Minh nhớ nhà?",
+            "points": 1,
+            "explanation": "",
+            "options": [
+              {
+                "id": "e4aad48d",
+                "text": "Vì anh không có tiền."
+              },
+              {
+                "id": "153dcaff",
+                "text": "Vì Hà Nội đông, ồn và mùa đông lạnh hơn quê anh."
+              },
+              {
+                "id": "672b932d",
+                "text": "Vì anh không thích trường đại học."
+              },
+              {
+                "id": "77677c0a",
+                "text": "Vì anh không có bạn ở Đà Nẵng."
+              }
+            ],
+            "correct": [
+              "153dcaff"
+            ]
+          },
+          {
+            "id": "757d26ca",
+            "type": "true_false",
+            "prompt": "Bây giờ Minh vẫn ghét cuộc sống ở Hà Nội.",
+            "points": 1,
+            "explanation": "Đoạn văn nói \"Bây giờ thì khác rồi\" — anh đã quen và thấy học được nhiều thứ.",
+            "correct": "false"
+          },
+          {
+            "id": "16929629",
+            "type": "short_answer",
+            "prompt": "Cuối tuần Minh thường đạp xe quanh hồ nào?",
+            "points": 1,
+            "explanation": "",
+            "answers": [
+              "Hồ Tây",
+              "Tây"
+            ],
+            "caseSensitive": false
+          },
+          {
+            "id": "bceb5bbe",
+            "type": "ordering",
+            "prompt": "Sắp xếp thành câu đúng theo ý đoạn văn.",
+            "points": 2,
+            "explanation": "",
+            "items": [
+              {
+                "id": "6547859e",
+                "text": "Tuy Hà Nội không yên tĩnh như Đà Nẵng"
+              },
+              {
+                "id": "c2907e36",
+                "text": "nhưng ở đây"
+              },
+              {
+                "id": "f2716aab",
+                "text": "anh học được nhiều thứ"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "d7995bce",
+        "title": "Phần 5 — Viết (作文)",
+        "instructions": "",
+        "passage": "",
+        "audio": null,
+        "questions": [
+          {
+            "id": "2184f408",
+            "type": "essay",
+            "prompt": "Viết khoảng 100–120 từ về một thành phố em đã sống hoặc đã đến, so sánh với quê em. Dùng ít nhất hai cặp liên từ đã học (vì…nên, tuy…nhưng, nếu…thì, càng…càng).",
+            "points": 5,
+            "explanation": ""
+          }
+        ]
+      }
+    ],
+    "id": "7f929ff4fce8f018",
+    "createdAt": "2026-08-16T14:32:58.778Z",
+    "updatedAt": "2026-08-16T14:51:24.373Z"
+  },
+  {
+    "title": "Tiếng Việt trung cấp thấp 2 — Giao tiếp và tình huống",
+    "description": "Đề số 2 cho người đã học khoảng 100–200 giờ, tập trung vào tình huống thực tế: hỏi đường, đặt phòng, đi khám, gọi điện. ベトナム語準中級テスト②：場面別コミュニケーション",
+    "timeLimitMin": 40,
+    "published": true,
+    "showResultDetail": true,
+    "shuffleQuestions": false,
+    "sections": [
+      {
+        "id": "9b2c3ada",
+        "title": "Phần 1 — Cách nói lịch sự (敬意表現)",
+        "instructions": "",
+        "passage": "",
+        "audio": null,
+        "questions": [
+          {
+            "id": "1b2e0543",
+            "type": "multiple_choice",
+            "multiple": false,
+            "prompt": "Muốn nhờ người khác giúp một cách lịch sự, câu nào phù hợp nhất?",
+            "points": 1,
+            "explanation": "",
+            "options": [
+              {
+                "id": "b4d22069",
+                "text": "Giúp tôi!"
+              },
+              {
+                "id": "6bbd4188",
+                "text": "Anh làm ơn giúp em một chút được không ạ?"
+              },
+              {
+                "id": "2b9b99e9",
+                "text": "Anh phải giúp tôi."
+              },
+              {
+                "id": "96b231ad",
+                "text": "Giúp đi."
+              }
+            ],
+            "correct": [
+              "6bbd4188"
+            ]
+          },
+          {
+            "id": "57e453d5",
+            "type": "multiple_choice",
+            "multiple": false,
+            "prompt": "Từ chối lời mời một cách lịch sự, nên nói thế nào?",
+            "points": 1,
+            "explanation": "",
+            "options": [
+              {
+                "id": "2c9515db",
+                "text": "Không."
+              },
+              {
+                "id": "5654445a",
+                "text": "Tôi không muốn."
+              },
+              {
+                "id": "a5f4b1be",
+                "text": "Cảm ơn anh, nhưng tiếc quá, hôm đó em bận mất rồi."
+              },
+              {
+                "id": "13323fc1",
+                "text": "Tôi ghét việc đó."
+              }
+            ],
+            "correct": [
+              "a5f4b1be"
+            ]
+          },
+          {
+            "id": "90e6ba4c",
+            "type": "multiple_choice",
+            "multiple": false,
+            "prompt": "\"Anh cho em hỏi một chút ạ\" dùng khi nào?",
+            "points": 1,
+            "explanation": "",
+            "options": [
+              {
+                "id": "2502df4d",
+                "text": "Khi chào tạm biệt."
+              },
+              {
+                "id": "c70e6ee5",
+                "text": "Khi bắt đầu hỏi ai đó điều gì."
+              },
+              {
+                "id": "b02ea0a4",
+                "text": "Khi xin lỗi vì đến muộn."
+              },
+              {
+                "id": "adceefb5",
+                "text": "Khi cảm ơn."
+              }
+            ],
+            "correct": [
+              "c70e6ee5"
+            ]
+          },
+          {
+            "id": "637c54fd",
+            "type": "multiple_choice",
+            "multiple": true,
+            "prompt": "Chọn tất cả các cách nói giảm nhẹ lời chê.",
+            "points": 2,
+            "explanation": "",
+            "options": [
+              {
+                "id": "108d5bbc",
+                "text": "Món này hơi mặn một chút."
+              },
+              {
+                "id": "68402037",
+                "text": "Món này dở lắm."
+              },
+              {
+                "id": "ea6daf25",
+                "text": "Cái áo này cũng được, nhưng em thấy màu kia hợp hơn."
+              },
+              {
+                "id": "889e0a15",
+                "text": "Cái áo này xấu quá."
+              }
+            ],
+            "correct": [
+              "108d5bbc",
+              "ea6daf25"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "f3d66322",
+        "title": "Phần 2 — Hỏi đường (道を尋ねる)",
+        "instructions": "Đọc đoạn hội thoại rồi trả lời.",
+        "passage": "Yuki: Chị ơi, cho em hỏi, bưu điện ở đâu ạ?\nNgười qua đường: Em đi thẳng đường này khoảng 200 mét, đến ngã tư thì rẽ phải. Bưu điện nằm bên trái, đối diện siêu thị.\nYuki: Đi bộ có xa không chị?\nNgười qua đường: Không xa đâu, khoảng năm phút thôi.",
+        "audio": null,
+        "questions": [
+          {
+            "id": "51bc0055",
+            "type": "multiple_choice",
+            "multiple": false,
+            "prompt": "Đến ngã tư thì phải làm gì?",
+            "points": 1,
+            "explanation": "",
+            "options": [
+              {
+                "id": "8f3e045a",
+                "text": "Rẽ trái"
+              },
+              {
+                "id": "e198d27e",
+                "text": "Rẽ phải"
+              },
+              {
+                "id": "9008a7fd",
+                "text": "Đi thẳng tiếp"
+              },
+              {
+                "id": "80e37de2",
+                "text": "Quay lại"
+              }
+            ],
+            "correct": [
+              "e198d27e"
+            ]
+          },
+          {
+            "id": "b92cd953",
+            "type": "multiple_choice",
+            "multiple": false,
+            "prompt": "Bưu điện nằm ở đâu?",
+            "points": 1,
+            "explanation": "",
+            "options": [
+              {
+                "id": "454046f9",
+                "text": "Bên phải, cạnh siêu thị"
+              },
+              {
+                "id": "2f00ffa6",
+                "text": "Bên trái, đối diện siêu thị"
+              },
+              {
+                "id": "7771ae3a",
+                "text": "Trong siêu thị"
+              },
+              {
+                "id": "6e879a6d",
+                "text": "Sau siêu thị"
+              }
+            ],
+            "correct": [
+              "2f00ffa6"
+            ]
+          },
+          {
+            "id": "cffc63ac",
+            "type": "fill_blank",
+            "prompt": "Điền từ chỉ phương hướng.",
+            "points": 2,
+            "explanation": "",
+            "text": "Anh đi ___ khoảng 100 mét rồi rẽ ___ ở đèn đỏ.",
+            "blanks": [
+              {
+                "answers": [
+                  "thẳng"
+                ],
+                "caseSensitive": false
+              },
+              {
+                "answers": [
+                  "trái",
+                  "phải"
+                ],
+                "caseSensitive": false
+              }
+            ]
+          },
+          {
+            "id": "b5cbb5fd",
+            "type": "matching",
+            "prompt": "Nối từ chỉ vị trí với nghĩa tiếng Nhật.",
+            "points": 4,
+            "explanation": "",
+            "left": [
+              {
+                "id": "514f4bd4",
+                "text": "đối diện"
+              },
+              {
+                "id": "782c05cf",
+                "text": "bên cạnh"
+              },
+              {
+                "id": "54bb34ae",
+                "text": "phía sau"
+              },
+              {
+                "id": "129707bd",
+                "text": "giữa"
+              }
+            ],
+            "right": [
+              {
+                "id": "ce85d254",
+                "text": "向かい"
+              },
+              {
+                "id": "7bb0759a",
+                "text": "隣"
+              },
+              {
+                "id": "98a5e56f",
+                "text": "後ろ"
+              },
+              {
+                "id": "2e507748",
+                "text": "間"
+              }
+            ],
+            "pairs": {
+              "514f4bd4": "ce85d254",
+              "782c05cf": "7bb0759a",
+              "54bb34ae": "98a5e56f",
+              "129707bd": "2e507748"
+            }
+          }
+        ]
+      },
+      {
+        "id": "d10467db",
+        "title": "Phần 3 — Đặt phòng và đi khám (予約・病院)",
+        "instructions": "",
+        "passage": "",
+        "audio": null,
+        "questions": [
+          {
+            "id": "4254397a",
+            "type": "multiple_choice",
+            "multiple": false,
+            "prompt": "Gọi điện đặt phòng khách sạn, câu mở đầu nào tự nhiên nhất?",
+            "points": 1,
+            "explanation": "",
+            "options": [
+              {
+                "id": "33d88941",
+                "text": "Tôi muốn phòng."
+              },
+              {
+                "id": "beab6d9e",
+                "text": "Alô, em muốn đặt một phòng đôi cho hai đêm ạ."
+              },
+              {
+                "id": "cf566684",
+                "text": "Cho tôi phòng ngay."
+              },
+              {
+                "id": "ca5aeb77",
+                "text": "Khách sạn còn phòng không, nhanh lên."
+              }
+            ],
+            "correct": [
+              "beab6d9e"
+            ]
+          },
+          {
+            "id": "dd825fb1",
+            "type": "multiple_choice",
+            "multiple": false,
+            "prompt": "Ở phòng khám, bác sĩ hỏi \"Em thấy trong người thế nào?\" — nghĩa là gì?",
+            "points": 1,
+            "explanation": "",
+            "options": [
+              {
+                "id": "e4b97be6",
+                "text": "Em bao nhiêu tuổi?"
+              },
+              {
+                "id": "95d3ff59",
+                "text": "具合はいかがですか（Em cảm thấy sức khoẻ ra sao?）"
+              },
+              {
+                "id": "dcff8b5b",
+                "text": "Em ở đâu?"
+              },
+              {
+                "id": "bfb539ed",
+                "text": "Em làm nghề gì?"
+              }
+            ],
+            "correct": [
+              "95d3ff59"
+            ]
+          },
+          {
+            "id": "e8283516",
+            "type": "fill_blank",
+            "prompt": "Điền từ chỉ triệu chứng.",
+            "points": 3,
+            "explanation": "",
+            "text": "Em bị ___ đầu, hơi ___ và ___ họng từ hôm qua.",
+            "blanks": [
+              {
+                "answers": [
+                  "đau",
+                  "nhức"
+                ],
+                "caseSensitive": false
+              },
+              {
+                "answers": [
+                  "sốt"
+                ],
+                "caseSensitive": false
+              },
+              {
+                "answers": [
+                  "đau",
+                  "viêm",
+                  "rát"
+                ],
+                "caseSensitive": false
+              }
+            ]
+          },
+          {
+            "id": "ded73d12",
+            "type": "multiple_choice",
+            "multiple": true,
+            "prompt": "Chọn tất cả câu dùng \"bị\" đúng ngữ pháp.",
+            "points": 2,
+            "explanation": "",
+            "options": [
+              {
+                "id": "d7834bc2",
+                "text": "Em bị cảm hai ngày rồi."
+              },
+              {
+                "id": "2db88a49",
+                "text": "Xe của em bị hỏng giữa đường."
+              },
+              {
+                "id": "e637aa38",
+                "text": "Em bị cô giáo khen."
+              },
+              {
+                "id": "03d57d90",
+                "text": "Hôm qua em bị mất ví."
+              }
+            ],
+            "correct": [
+              "d7834bc2",
+              "2db88a49",
+              "03d57d90"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ec703213",
+        "title": "Phần 4 — Kể lại và tường thuật (報告する)",
+        "instructions": "",
+        "passage": "",
+        "audio": null,
+        "questions": [
+          {
+            "id": "13090bf9",
+            "type": "ordering",
+            "prompt": "Sắp xếp thành câu tường thuật đúng.",
+            "points": 2,
+            "explanation": "",
+            "items": [
+              {
+                "id": "46d55773",
+                "text": "Chị Lan nói"
+              },
+              {
+                "id": "f0ed234a",
+                "text": "là hôm nay chị ấy"
+              },
+              {
+                "id": "2388c92b",
+                "text": "không đến lớp được"
+              },
+              {
+                "id": "4e995f3b",
+                "text": "vì phải đi công tác"
+              }
+            ]
+          },
+          {
+            "id": "cfc29345",
+            "type": "fill_blank",
+            "prompt": "Điền từ nối thời gian.",
+            "points": 2,
+            "explanation": "",
+            "text": "___ khi đến Việt Nam, tôi chưa từng ăn bún đậu. ___ đó thì tuần nào tôi cũng ăn.",
+            "blanks": [
+              {
+                "answers": [
+                  "Trước"
+                ],
+                "caseSensitive": false
+              },
+              {
+                "answers": [
+                  "Sau"
+                ],
+                "caseSensitive": false
+              }
+            ]
+          },
+          {
+            "id": "5f5c89bc",
+            "type": "short_answer",
+            "prompt": "Hoàn thành câu: \"Nếu hôm nay trời không mưa thì tôi ___ .\" (viết tiếp 2–5 từ)",
+            "points": 1,
+            "explanation": "",
+            "answers": [],
+            "caseSensitive": false
+          },
+          {
+            "id": "3821dd51",
+            "type": "essay",
+            "prompt": "Viết khoảng 100 từ kể lại một lần em gặp khó khăn khi dùng tiếng Việt (ở chợ, bệnh viện, hay khi hỏi đường) và em đã xử lý thế nào.",
+            "points": 4,
+            "explanation": ""
+          }
+        ]
+      }
+    ],
+    "id": "d711b62057c0b53a",
+    "createdAt": "2026-08-16T14:32:58.781Z",
+    "updatedAt": "2026-08-16T14:51:24.375Z"
+  }
+]
