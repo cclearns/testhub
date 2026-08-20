@@ -37,6 +37,7 @@
   --color-ok:         oklch(46%   0.110 160);
   --color-ok-2:       oklch(93%   0.045 160);
   --color-warn:       oklch(52%   0.120 60);
+  --color-warn-ink:   oklch(21%   0.080 60);
 
   /* Type */
   --font-display: "Baloo 2", "Segoe UI", system-ui, sans-serif;

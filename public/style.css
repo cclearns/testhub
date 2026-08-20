@@ -312,6 +312,7 @@ button.sm { padding: var(--space-3xs) var(--space-sm); font-size: var(--text-xs)
   padding: var(--space-3xs) var(--space-sm);
 }
 .pill.off { color: var(--color-muted); background: var(--color-paper-3); }
+.pill.late { color: var(--color-warn-ink); background: var(--color-warn); }
 
 /* ── Câu hỏi ─────────────────────────────────────────────────────────── */
 .q {

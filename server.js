@@ -9,8 +9,9 @@ const crypto = require('crypto');
 
 const ROOT = __dirname;
 const PUBLIC = path.join(ROOT, 'public');
-const DATA = path.join(ROOT, 'data');
-const UPLOADS = path.join(ROOT, 'uploads');
+/* Cho phép ghi đè thư mục dữ liệu/nghe (dùng cho test, hoặc chạy nhiều instance). */
+const DATA = process.env.TEST_DATA_DIR || path.join(ROOT, 'data');
+const UPLOADS = process.env.TEST_UPLOADS_DIR || path.join(ROOT, 'uploads');
 const PORT = process.env.PORT || 3000;
 const TEACHER_PASSWORD = process.env.TEACHER_PASSWORD || 'minmin';
 
@@ -38,6 +39,15 @@ const uid = () => crypto.randomBytes(8).toString('hex');
 /* ---------- phiên đăng nhập giáo viên ---------- */
 const sessions = new Map(); // token -> expiry
 const SESSION_MS = 12 * 60 * 60 * 1000;
+
+/* Cho phép học viên nộp trễ một chút (mạng) mà không bị đánh dấu muộn.
+   (= 60 giây) */
+const SUBMIT_GRACE_MS = 60 * 1000;
+
+/* Deep clone an toàn: structuredClone có sẵn từ Node 17, các bản cũ hơn lùi về JSON. */
+const deepClone = typeof structuredClone === "function"
+  ? structuredClone
+  : (x) => JSON.parse(JSON.stringify(x));
 function newSession() {
   const t = crypto.randomBytes(24).toString('hex');
   sessions.set(t, Date.now() + SESSION_MS);
@@ -64,6 +74,13 @@ const sameSet = (a, b) => {
   for (const x of A) if (!B.has(x)) return false;
   return true;
 };
+
+/* Độ muộn: học viên nộp quá giờ làm bài (+thời gian cho phép) so với mốc bắt đầu
+   do máy chủ phát. startedMs/nowMs tính bằng ms; limitSec/graceMs tính bằng giây. */
+function computeLate(startedMs, limitSec, graceMs, nowMs) {
+  if (!(limitSec > 0) || !startedMs) return false;
+  return (nowMs - startedMs) / 1000 > limitSec + graceMs / 1000;
+}
 
 /** Trả về {earned, max, correct(null nếu cần chấm tay), needsReview} */
 function gradeQuestion(q, ans) {
@@ -150,9 +167,28 @@ function gradeSubmission(test, answers) {
   };
 }
 
+/* Xây kết quả trả về học viên: điểm + (đáp án chi tiết nếu đề cho hiện). */
+function buildResult(sub, t) {
+  const result = {
+    id: sub.id, score: sub.score, maxScore: sub.maxScore,
+    needsReview: sub.needsReview, late: sub.late,
+    percent: sub.maxScore ? Math.round((sub.score / sub.maxScore) * 1000) / 10 : 0,
+  };
+  if (t.showResultDetail) {
+    result.details = sub.details;
+    result.key = allQuestions(t).map((q) => ({
+      id: q.id, prompt: q.prompt, type: q.type,
+      correct: q.correct, answers: q.answers, pairs: q.pairs,
+      blanks: q.blanks, items: q.items, options: q.options,
+      left: q.left, right: q.right, explanation: q.explanation,
+    }));
+  }
+  return result;
+}
+
 /* Bản đề gửi cho học viên: bỏ hết đáp án. */
 function sanitizeTest(test) {
-  const clone = JSON.parse(JSON.stringify(test));
+  const clone = deepClone(test);
   for (const s of clone.sections || []) {
     for (const q of s.questions || []) {
       delete q.correct; delete q.answers; delete q.pairs; delete q.explanation;
@@ -262,7 +298,15 @@ const readBody = (req, limit = 40 * 1024 * 1024) =>
   });
 const readJson = async (req) => {
   const b = await readBody(req, 8 * 1024 * 1024);
-  return b.length ? JSON.parse(b.toString('utf8')) : {};
+  if (!b.length) return {};
+  try {
+    return JSON.parse(b.toString('utf8'));
+  } catch {
+    /* Dữ liệu gửi đi hỏng: báo 400 rõ ràng thay vì 500 chung chung. */
+    const err = new Error('Dữ liệu gửi đi không hợp lệ');
+    err.friendly = true;
+    throw err;
+  }
 };
 
 const MIME = {
@@ -321,7 +365,17 @@ const server = http.createServer(async (req, res) => {
       if (!t) return send(res, 404, { error: 'Không tìm thấy bài test' });
       if (isTeacher(req) && url.searchParams.get('full') === '1') return send(res, 200, t);
       if (!t.published) return send(res, 403, { error: 'Bài test chưa được mở' });
-      return send(res, 200, sanitizeTest(t));
+      const now = Date.now();
+      const clean = sanitizeTest(t);
+      /* Học viên đếm ngược theo đồng hồ máy chủ (không thể chỉnh bằng trình duyệt). */
+      if (t.timeLimitMin) {
+        clean.serverNow = new Date(now).toISOString();
+        clean.startedAt = new Date(now).toISOString();
+        clean.deadline = new Date(now + t.timeLimitMin * 60000).toISOString();
+      }
+      /* Mỗi lần mở bài là một lượt làm bài riêng — dùng để tránh nộp trùng. */
+      clean.submitId = uid();
+      return send(res, 200, clean);
     }
     /* Phát bài nghe theo đề + phần thi (link gốc nằm ở máy chủ) */
     if (req.method === 'GET' && /^\/api\/audio\/\w+\/\w+$/.test(p)) {
@@ -340,33 +394,39 @@ const server = http.createServer(async (req, res) => {
       const name = String(body.studentName || '').trim();
       if (!name) return send(res, 400, { error: 'Vui lòng nhập họ tên' });
 
+      /* Nǭp gấp / nạp lại trùng: mỗi submitId chỉ lưu một lần (kiểm tra trên dữ liệu đã lưu, an toàn khi khởi động lại). */
+      /* Đọc file một lần: vừa kiểm tra trùng vừa tái dùng làm danh sách lưu. */
+      const all = subs();
+      const dupIndex = body.submitId
+        ? all.findIndex((s) => s.submitId === body.submitId && s.testId === t.id)
+        : -1;
+      if (dupIndex >= 0) {
+        const existing = all[dupIndex];
+        /* Đã lưu rồi — trả lại kết quả cũ (idempotent), không tạo bài trùng.
+         Vẫn kèm đáp án chi tiết nếu đề cho hiện, để học viên nộp lại vẫn xem được. */
+        return send(res, 200, { ...buildResult(existing, t), duplicate: true });
+      }
+
       const answers = body.answers || {};
       const g = gradeSubmission(t, answers);
+
+      /* Tự động nộp phải dựa vào đồng hồ máy chủ, không phải trình duyệt.
+         Mốc bắt đầu do máy chủ phát (miễn học viên gửi lại giá trị đó), nên không bị
+         sai số đồng hồ thiết bị. */
+      const limitSec = (t.timeLimitMin || 0) * 60;
+      const startedMs = body.startedAt ? Date.parse(body.startedAt) : null;
+      const late = computeLate(startedMs, limitSec, SUBMIT_GRACE_MS, Date.now());
+
       const sub = {
-        id: uid(), testId: t.id, testTitle: t.title,
+        id: uid(), testId: t.id, testTitle: t.title, submitId: body.submitId || null,
         studentName: name, studentClass: String(body.studentClass || '').trim(),
         startedAt: body.startedAt || null, submittedAt: new Date().toISOString(),
         durationSec: body.durationSec || null,
-        audioPlays: body.audioPlays || {},
-        answers, ...g,
+        audioPlays: body.audioPlays || {}, late, answers, ...g,
       };
-      const all = subs(); all.push(sub); saveSubs(all);
+      all.push(sub); saveSubs(all);
 
-      const result = {
-        id: sub.id, score: sub.score, maxScore: sub.maxScore,
-        needsReview: sub.needsReview,
-        percent: sub.maxScore ? Math.round((sub.score / sub.maxScore) * 1000) / 10 : 0,
-      };
-      if (t.showResultDetail) {
-        result.details = sub.details;
-        result.key = allQuestions(t).map((q) => ({
-          id: q.id, prompt: q.prompt, type: q.type,
-          correct: q.correct, answers: q.answers, pairs: q.pairs,
-          blanks: q.blanks, items: q.items, options: q.options,
-          left: q.left, right: q.right, explanation: q.explanation,
-        }));
-      }
-      return send(res, 200, result);
+      return send(res, 200, buildResult(sub, t));
     }
 
     /* --- giáo viên (yêu cầu đăng nhập) --- */
@@ -464,10 +524,11 @@ const server = http.createServer(async (req, res) => {
       if (api('GET', '/api/admin/export')) {
         const testId = url.searchParams.get('testId');
         const list = subs().filter((s) => !testId || s.testId === testId);
-        const rows = [['Họ tên', 'Lớp', 'Bài test', 'Điểm', 'Tổng điểm', '%', 'Nộp lúc', 'Thời gian (phút)']];
+        const rows = [['Họ tên', 'Lớp', 'Bài test', 'Điểm', 'Tổng điểm', '%', 'Muộn', 'Nộp lúc', 'Thời gian (phút)']];
         for (const s of list) {
           rows.push([s.studentName, s.studentClass || '', s.testTitle, s.score, s.maxScore,
             s.maxScore ? Math.round((s.score / s.maxScore) * 1000) / 10 : 0,
+            s.late ? 'Có' : '',
             s.submittedAt, s.durationSec ? Math.round(s.durationSec / 60) : '']);
         }
         const csv = '﻿' + rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
@@ -515,11 +576,21 @@ const server = http.createServer(async (req, res) => {
     if (p === '/') return serveStatic(res, PUBLIC, 'index.html');
     return serveStatic(res, PUBLIC, p.replace(/^\//, ''));
   } catch (e) {
+    /* Lỗi có thông báo thân thiện (ví dụ JSON hỏng) trả 400, phần còn lại vẫn là 500. */
+    if (e && e.friendly) return send(res, 400, { error: e.message });
     return send(res, 500, { error: e.message });
   }
 });
 
-server.listen(PORT, () => {
-  console.log(`Hệ thống thi đang chạy: http://localhost:${PORT}`);
-  console.log(`Trang giáo viên: http://localhost:${PORT}/admin.html (mật khẩu: ${TEACHER_PASSWORD})`);
-});
+/* Cho phép require trong test mà không tự động mở cổng. */
+if (require.main === module) {
+  server.listen(PORT, () => {
+    console.log(`Hệ thống thi đang chạy: http://localhost:${PORT}`);
+    console.log(`Trang giáo viên: http://localhost:${PORT}/admin.html (mật khẩu: ${TEACHER_PASSWORD})`);
+  });
+}
+
+module.exports = {
+  server, computeLate, gradeQuestion, gradeSubmission, sanitizeTest,
+  directAudioUrl, isPublicHttpUrl,
+};

@@ -74,11 +74,13 @@ if (!student.name) location.href = 'index.html';
 
 const answers = {};      // qid -> đáp án
 const audioPlays = {};   // sectionId -> số lần đã nghe
-let test = null, startedAt = new Date().toISOString(), timerInt = null, submitted = false, remainingSec = 0;
+let test = null, submitId = null, startedAt = new Date().toISOString(), timerInt = null, submitted = false, remainingSec = 0;
 
 fetch('/api/tests/' + testId).then(r => r.json()).then(t => {
   if (t.error) { $('body').innerHTML = `<div class="card notice err">${esc(t.error)}</div>`; return; }
   test = t;
+  submitId = t.submitId || null;   /* máy chủ phát mỗi lần mở bài, dùng tránh nộp trùng */
+  if (t.startedAt) startedAt = t.startedAt;   /* mốc bắt đầu do máy chủ phát — dùng tính độ muộn, không bị sai số đồng hồ */
   render();
 });
 
@@ -94,7 +96,8 @@ function render() {
   wire();
   updateProgress();
 
-  if (test.timeLimitMin) startTimer(test.timeLimitMin * 60);
+  /* Đếm ngược theo đồng hồ máy chủ (deadline) thay vì trình duyệt. */
+  if (test.timeLimitMin) startTimer(test.deadline || new Date(Date.now() + test.timeLimitMin * 60000).toISOString());
 
   $('submit').onclick = () => {
     const left = test.sections.flatMap(s => s.questions).filter(q => !isAnswered(q)).length;
@@ -304,15 +307,17 @@ function updateProgress() {
   $('progress').textContent = `Đã làm ${done}/${qs.length} câu`;
 }
 
-function startTimer(sec) {
+function startTimer(deadline) {
   clearInterval(timerInt);
   const el = $('timer'); el.classList.remove('hidden');
+  const end = Date.parse(deadline);
   const tick = () => {
-    remainingSec = sec;
+    remainingSec = Math.round((end - Date.now()) / 1000);
+    let sec = remainingSec < 0 ? 0 : remainingSec;
     const m = Math.floor(sec / 60), s = sec % 60;
     el.textContent = `${m}:${String(s).padStart(2, '0')}`;
     el.classList.toggle('low', sec <= 60);
-    if (sec-- <= 0) {
+    if (sec <= 0) {
       clearInterval(timerInt);
       el.textContent = 'Hết giờ';
       $('confirmBox').classList.add('hidden');
@@ -337,7 +342,7 @@ async function submit() {
     $('submit').textContent = 'Nộp bài';
     $('submitErrText').textContent = msg;
     $('submitErr').classList.remove('hidden');
-    if (test.timeLimitMin && remainingSec > 0) startTimer(remainingSec);
+    if (test.timeLimitMin) startTimer(test.deadline);
   };
 
   let r;
@@ -346,7 +351,7 @@ async function submit() {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         testId, studentName: student.name, studentClass: student.cls,
-        answers, startedAt, audioPlays,
+        answers, startedAt, audioPlays, submitId,
         durationSec: Math.round((Date.now() - new Date(startedAt)) / 1000),
       }),
     });
@@ -364,6 +369,9 @@ function showResult(r) {
   $('timer').classList.add('hidden');
   $('exitBox').classList.add('hidden');
   $('exit').classList.add('hidden');
+  const lateNote = r.late
+    ? `<div class="notice err"><strong>Bài của bạn bị tính là muộn</strong> — nộp khi đã hết giờ (+thời gian cho phép). Máy chủ vẫn chấp nhận và chấm bài.</div>`
+    : '';
   const detail = r.key ? `<div class="card"><h3>Đáp án</h3>${r.key.map(k => {
     const d = r.details[k.id] || {};
     const mark = d.correct === true ? '<span class="correct">✔ Đúng</span>'
@@ -376,6 +384,7 @@ function showResult(r) {
 
   $('result').innerHTML = `
     <div class="card">
+      ${lateNote}
       <p class="small muted">Kết quả của ${esc(student.name)}</p>
       <div class="stat-row">
         <div class="stat"><div class="label">Điểm</div><div class="figure">${r.score}<span class="muted" style="font-size:.5em">/${r.maxScore}</span></div></div>
