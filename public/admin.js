@@ -515,19 +515,21 @@ async function showSubmissions(testId) {
       <div class="stat"><div class="label">Số bài nộp</div><div class="figure">${list.length}</div></div>
       <div class="stat"><div class="label">Điểm trung bình</div><div class="figure">${avg}%</div></div>
       <div class="stat"><div class="label">Cần chấm tay</div><div class="figure">${list.filter(s => s.needsReview).length}</div></div>
+      <div class="stat"><div class="label">Muộn</div><div class="figure">${list.filter(s => s.late).length}</div></div>
     </div>
     <div class="card"><div class="table-scroll"><table><thead><tr>
-      <th>Họ tên</th>${hasClass ? '<th>Lớp</th>' : ''}<th>Bài test</th><th>Điểm</th><th>%</th><th>Nộp lúc</th><th></th>
+      <th>Họ tên</th>${hasClass ? '<th>Lớp</th>' : ''}<th>Bài test</th><th>Điểm</th><th>%</th><th>Muộn</th><th>Nộp lúc</th><th></th>
     </tr></thead><tbody>
       ${list.map(s => `<tr>
         <td>${esc(s.studentName)}</td>${hasClass ? `<td>${esc(s.studentClass || '')}</td>` : ''}<td>${esc(s.testTitle)}</td>
         <td>${s.score}/${s.maxScore}</td>
         <td>${s.maxScore ? Math.round(s.score / s.maxScore * 1000) / 10 : 0}%</td>
+        <td>${s.late ? '<span class="pill late">Muộn</span>' : '<span class="small muted">—</span>'}</td>
         <td class="small muted">${new Date(s.submittedAt).toLocaleString('vi-VN')}</td>
         <td>${s.needsReview ? '<span class="pill">cần chấm</span> ' : ''}
           <button class="sm" data-view="${s.id}">Xem</button>
           <button class="sm danger" data-delsub="${s.id}">Xoá</button></td>
-      </tr>`).join('') || `<tr><td colspan="${hasClass ? 7 : 6}" class="muted">Chưa có bài nộp nào.</td></tr>`}
+      </tr>`).join('') || `<tr><td colspan="${hasClass ? 8 : 7}" class="muted">Chưa có bài nộp nào.</td></tr>`}
     </tbody></table></div></div>
     <div id="detail"></div>`;
 
@@ -545,6 +547,7 @@ async function viewSubmission(s) {
   const qs = (test.sections || []).flatMap(x => x.questions || []);
   $('detail').innerHTML = `<div class="card"><h3>Bài làm của ${esc(s.studentName)}</h3>
     <p class="small muted">Thời gian làm: ${s.durationSec ? Math.round(s.durationSec / 60) + ' phút' : '—'}
+      ${s.late ? ' · <span class="pill late">Muộn</span>' : ''}
       ${Object.keys(s.audioPlays || {}).length ? ' · số lần nghe: ' + Object.values(s.audioPlays).join(', ') : ''}</p>
     ${qs.map(q => {
       const d = s.details[q.id] || {};

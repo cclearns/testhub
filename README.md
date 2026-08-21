@@ -13,6 +13,18 @@ node quiz/server.js
 - Giáo viên: <http://localhost:3000/admin.html> — mật khẩu `minmin`
   (đổi bằng biến môi trường `TEACHER_PASSWORD`).
 
+Môi trường lưu trú có thể ghi đè bằng `TEST_DATA_DIR` và `TEST_UPLOADS_DIR`
+(dùng khi chạy nhiều instance hoặc test).
+
+## Kiểm tra
+
+```bash
+npm test
+```
+
+Dùng `node:test` (có sẵn trong Node 18+, không phụ thuộc thư viện ngoài).
+Bài kiểm tra chạy trên thư mục dữ liệu tạm, không ảnh hưởng đến dữ liệu thật.
+
 ## Cấu trúc
 
 | Tệp | Vai trò |
