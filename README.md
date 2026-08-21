@@ -149,6 +149,8 @@ dán nội dung tệp.
 ## Tính năng khác
 
 - Hẹn giờ, tự động nộp khi hết giờ.
+- **Thống kê theo câu hỏi** ở trang Kết quả: câu sai nhiều nhất lên trên,
+  kèm số bài chờ chấm tay — để biết ưu tiên dạy lại chỗ nào.
 - Xáo trộn thứ tự câu hỏi (tuỳ chọn từng đề).
 - Mở/đóng đề; link riêng cho từng đề để gửi học viên.
 - Bài đọc (reading passage) cho từng phần thi.
