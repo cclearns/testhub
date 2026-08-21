@@ -517,6 +517,7 @@ async function showSubmissions(testId) {
       <div class="stat"><div class="label">Cần chấm tay</div><div class="figure">${list.filter(s => s.needsReview).length}</div></div>
       <div class="stat"><div class="label">Muộn</div><div class="figure">${list.filter(s => s.late).length}</div></div>
     </div>
+    ${testId ? '<div id="qstats"></div>' : ''}
     <div class="card"><div class="table-scroll"><table><thead><tr>
       <th>Họ tên</th>${hasClass ? '<th>Lớp</th>' : ''}<th>Bài test</th><th>Điểm</th><th>%</th><th>Muộn</th><th>Nộp lúc</th><th></th>
     </tr></thead><tbody>
@@ -540,6 +541,52 @@ async function showSubmissions(testId) {
     await api('/api/admin/submissions/' + b.dataset.delsub, { method: 'DELETE' });
     showSubmissions(testId);
   });
+  if (testId) loadQuestionStats(testId);
+}
+
+/* Thống kê theo câu hỏi — câu sai nhiều nhất lên trên, để biết dạy lại chỗ nào.
+   Nền đỏ nhạt đánh dấu câu dưới 50% — chỗ cả lớp yếu. */
+async function loadQuestionStats(testId) {
+  const el = $('qstats');
+  if (!el) return;
+  let st;
+  try { st = await api('/api/admin/tests/' + testId + '/stats'); }
+  catch (e) { el.innerHTML = `<div class="notice err">Không tải được thống kê: ${esc(e.message || String(e))}</div>`; return; }
+  if (st.error) { el.innerHTML = `<div class="notice err">Không tải được thống kê: ${esc(st.error)}</div>`; return; }
+  const qs = (st.questions || [])
+    .filter(q => q.attempts > 0)
+    .sort((a, b) => (a.avgPercent == null ? 101 : a.avgPercent) - (b.avgPercent == null ? 101 : b.avgPercent));
+  if (!qs.length) { el.innerHTML = '<p class="small muted">Chưa có dữ liệu thống kê cho đề này.</p>'; return; }
+  el.innerHTML = `
+    <div class="card">
+      <h3>Thống kê theo câu hỏi</h3>
+      <p class="small muted">Sắp xếp câu sai nhiều nhất lên trên — ưu tiên dạy lại những câu này.
+        Trung bình chỉ tính bài đã chấm; câu chờ chấm tay chưa tính vào.
+        Cột "Sai / thiếu" tính trên số bài đã chấm.</p>
+      <div class="table-scroll"><table>
+      <thead><tr>
+        <th>Câu hỏi</th><th>Dạng</th><th>Điểm</th><th>Trung bình</th><th>Sai / thiếu</th><th>Chờ chấm</th>
+      </tr></thead>
+      <tbody>
+      ${qs.map(q => {
+        const raw = q.prompt || '(chưa có nội dung)';
+        const short = raw.length > 80 ? raw.slice(0, 80) + '…' : raw;
+        const graded = q.graded != null ? q.graded : Math.max(0, (q.attempts || 0) - (q.pendingReview || 0));
+        const wrongCell = graded > 0
+          ? (q.wrongCount ? `${q.wrongCount}/${graded}` : `<span class="muted">0/${graded}</span>`)
+          : '<span class="muted" title="Chưa có bài đã chấm">—</span>';
+        return `
+        <tr${q.avgPercent != null && q.avgPercent < 50 ? ' class="row-weak"' : ''}>
+          <td class="small" title="${esc(raw)}">${esc(short)}${q.sectionTitle ? ` <span class="muted">— ${esc(q.sectionTitle)}</span>` : ''}</td>
+          <td class="small muted">${TYPES[q.type] || esc(q.type)}</td>
+          <td class="small">${q.points}</td>
+          <td class="small">${q.avgPercent == null ? '<span class="muted">—</span>' : `<strong>${q.avgPercent}%</strong>`}</td>
+          <td class="small">${wrongCell}</td>
+          <td class="small">${q.pendingReview ? `<span class="pill">${q.pendingReview}</span>` : '<span class="muted">—</span>'}</td>
+        </tr>`;
+      }).join('')}
+      </tbody></table></div>
+    </div>`;
 }
 
 async function viewSubmission(s) {

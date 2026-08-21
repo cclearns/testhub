@@ -18,6 +18,9 @@ const TEACHER_PASSWORD = process.env.TEACHER_PASSWORD || 'minmin';
 for (const d of [DATA, UPLOADS]) fs.mkdirSync(d, { recursive: true });
 
 /* ---------- lưu trữ ---------- */
+/* store.write dùng ghi atomic (tmp → rename): thao tác đọc (GET) luôn thấy
+   snapshot nhất quán, không cần vào hàng đợi mutate — chỉ các thao tác
+   "đọc → sửa → ghi" (mutate) mới cần serialize. */
 const store = {
   read(name, fallback) {
     const f = path.join(DATA, name + '.json');
@@ -33,6 +36,16 @@ const tests = () => store.read('tests', []);
 const saveTests = (v) => store.write('tests', v);
 const subs = () => store.read('submissions', []);
 const saveSubs = (v) => store.write('submissions', v);
+
+/* Hàng đợi duy nhất cho mọi thao tác "đọc → sửa → ghi" (mutate): các thao tác
+   chạy lần lượt, không chồng lên nhau — cả lớp nộp cùng lúc cũng không bài nào
+   bị đè lên bài khác. fn được phép async; lỗi trong fn không chặn hàng đợi. */
+let mutationQueue = Promise.resolve();
+function mutate(fn) {
+  const run = mutationQueue.then(async () => fn());
+  mutationQueue = run.catch(() => {});
+  return run;
+}
 
 const uid = () => crypto.randomBytes(8).toString('hex');
 
@@ -394,39 +407,44 @@ const server = http.createServer(async (req, res) => {
       const name = String(body.studentName || '').trim();
       if (!name) return send(res, 400, { error: 'Vui lòng nhập họ tên' });
 
-      /* Nǭp gấp / nạp lại trùng: mỗi submitId chỉ lưu một lần (kiểm tra trên dữ liệu đã lưu, an toàn khi khởi động lại). */
-      /* Đọc file một lần: vừa kiểm tra trùng vừa tái dùng làm danh sách lưu. */
-      const all = subs();
-      const dupIndex = body.submitId
-        ? all.findIndex((s) => s.submitId === body.submitId && s.testId === t.id)
-        : -1;
-      if (dupIndex >= 0) {
-        const existing = all[dupIndex];
-        /* Đã lưu rồi — trả lại kết quả cũ (idempotent), không tạo bài trùng.
-         Vẫn kèm đáp án chi tiết nếu đề cho hiện, để học viên nộp lại vẫn xem được. */
-        return send(res, 200, { ...buildResult(existing, t), duplicate: true });
-      }
+      /* Nộp gấp / nộp lại trùng: mỗi submitId chỉ lưu một lần (kiểm tra trên dữ
+         liệu đã lưu, an toàn khi khởi động lại). "Đọc → kiểm tra trùng → ghi" phải
+         nằm trong một khối serialize (mutate) để hai bài nộp đồng thời không đè nhau. */
+      const outcome = await mutate(() => {
+        const all = subs();
+        const dupIndex = body.submitId
+          ? all.findIndex((s) => s.submitId === body.submitId && s.testId === t.id)
+          : -1;
+        if (dupIndex >= 0) {
+          /* Đã lưu rồi — trả lại kết quả cũ (idempotent), không tạo bài trùng.
+             Vẫn kèm đáp án chi tiết nếu đề cho hiện, để học viên nộp lại vẫn xem được. */
+          return { duplicate: true, sub: all[dupIndex] };
+        }
 
-      const answers = body.answers || {};
-      const g = gradeSubmission(t, answers);
+        const answers = body.answers || {};
+        const g = gradeSubmission(t, answers);
 
-      /* Tự động nộp phải dựa vào đồng hồ máy chủ, không phải trình duyệt.
-         Mốc bắt đầu do máy chủ phát (miễn học viên gửi lại giá trị đó), nên không bị
-         sai số đồng hồ thiết bị. */
-      const limitSec = (t.timeLimitMin || 0) * 60;
-      const startedMs = body.startedAt ? Date.parse(body.startedAt) : null;
-      const late = computeLate(startedMs, limitSec, SUBMIT_GRACE_MS, Date.now());
+        /* Tự động nộp phải dựa vào đồng hồ máy chủ, không phải trình duyệt.
+           Mốc bắt đầu do máy chủ phát (miễn học viên gửi lại giá trị đó), nên
+           không bị sai số đồng hồ thiết bị. */
+        const limitSec = (t.timeLimitMin || 0) * 60;
+        const startedMs = body.startedAt ? Date.parse(body.startedAt) : null;
+        const late = computeLate(startedMs, limitSec, SUBMIT_GRACE_MS, Date.now());
 
-      const sub = {
-        id: uid(), testId: t.id, testTitle: t.title, submitId: body.submitId || null,
-        studentName: name, studentClass: String(body.studentClass || '').trim(),
-        startedAt: body.startedAt || null, submittedAt: new Date().toISOString(),
-        durationSec: body.durationSec || null,
-        audioPlays: body.audioPlays || {}, late, answers, ...g,
-      };
-      all.push(sub); saveSubs(all);
+        const sub = {
+          id: uid(), testId: t.id, testTitle: t.title, submitId: body.submitId || null,
+          studentName: name, studentClass: String(body.studentClass || '').trim(),
+          startedAt: body.startedAt || null, submittedAt: new Date().toISOString(),
+          durationSec: body.durationSec || null,
+          audioPlays: body.audioPlays || {}, late, answers, ...g,
+        };
+        all.push(sub); saveSubs(all);
+        return { duplicate: false, sub };
+      });
 
-      return send(res, 200, buildResult(sub, t));
+      return send(res, 200, outcome.duplicate
+        ? { ...buildResult(outcome.sub, t), duplicate: true }
+        : buildResult(outcome.sub, t));
     }
 
     /* --- giáo viên (yêu cầu đăng nhập) --- */
@@ -443,44 +461,97 @@ const server = http.createServer(async (req, res) => {
       }
       if (api('POST', '/api/admin/tests')) {
         const body = await readJson(req);
-        const now = new Date().toISOString();
-        const all = tests();
-        let t;
-        if (body.id && all.some((x) => x.id === body.id)) {
-          t = all.find((x) => x.id === body.id);
-          Object.assign(t, body, { updatedAt: now });
-        } else {
-          t = { ...body, id: body.id || uid(), createdAt: now, updatedAt: now };
-          all.push(t);
-        }
-        saveTests(all);
+        const t = await mutate(() => {
+          const now = new Date().toISOString();
+          const all = tests();
+          if (body.id && all.some((x) => x.id === body.id)) {
+            const ex = all.find((x) => x.id === body.id);
+            Object.assign(ex, body, { updatedAt: now });
+            saveTests(all);
+            return ex;
+          }
+          const nt = { ...body, id: body.id || uid(), createdAt: now, updatedAt: now };
+          all.push(nt);
+          saveTests(all);
+          return nt;
+        });
         return send(res, 200, t);
       }
-      /* Xoá đề = xoá luôn bài nộp và tệp nghe của riêng đề đó. */
+      /* Xoá đề = xoá luôn bài nộp và tệp nghe của riêng đề đó.
+         Hai file được ghi trong cùng một khối mutate: không request nào
+         đọc/xoá chồng lên nhau. Nếu process chết giữa 2 ghi, bấm "Xoá" lại
+         vẫn chạy được (idempotent) — không cần khôi phục tay. */
       if (req.method === 'DELETE' && /^\/api\/admin\/tests\/\w+$/.test(p)) {
         const id = p.split('/').pop();
-        const all = tests();
-        const target = all.find((t) => t.id === id);
-        if (!target) return send(res, 404, { error: 'Không tìm thấy bài test' });
+        const outcome = await mutate(() => {
+          const all = tests();
+          const target = all.find((t) => t.id === id);
+          if (!target) return { notFound: true };
 
-        const remaining = all.filter((t) => t.id !== id);
+          const remaining = all.filter((t) => t.id !== id);
 
-        /* Tệp nghe: chỉ xoá tệp không còn đề nào khác dùng tới. */
-        const stillUsed = new Set(remaining.flatMap(localAudioFiles));
-        const removedFiles = [];
-        for (const name of new Set(localAudioFiles(target))) {
-          if (stillUsed.has(name)) continue;
-          try { fs.unlinkSync(path.join(UPLOADS, name)); removedFiles.push(name); }
-          catch { /* tệp đã bị xoá tay từ trước */ }
-        }
+          /* Tệp nghe: chỉ xoá tệp không còn đề nào khác dùng tới. */
+          const stillUsed = new Set(remaining.flatMap(localAudioFiles));
+          const removedFiles = [];
+          for (const name of new Set(localAudioFiles(target))) {
+            if (stillUsed.has(name)) continue;
+            try { fs.unlinkSync(path.join(UPLOADS, name)); removedFiles.push(name); }
+            catch { /* tệp đã bị xoá tay từ trước */ }
+          }
 
-        const before = subs();
-        const keptSubs = before.filter((s) => s.testId !== id);
-        const removedSubs = before.length - keptSubs.length;
+          const before = subs();
+          const keptSubs = before.filter((s) => s.testId !== id);
+          const removedSubs = before.length - keptSubs.length;
 
-        saveSubs(keptSubs);
-        saveTests(remaining);
-        return send(res, 200, { ok: true, removedSubmissions: removedSubs, removedFiles });
+          saveSubs(keptSubs);
+          saveTests(remaining);
+          return { removedSubs, removedFiles };
+        });
+        if (outcome.notFound) return send(res, 404, { error: 'Không tìm thấy bài test' });
+        return send(res, 200, { ok: true, removedSubmissions: outcome.removedSubs, removedFiles: outcome.removedFiles });
+      }
+      /* Thống kê theo câu hỏi: câu nào sai nhiều nhất — để biết dạy lại chỗ nào.
+         Trung bình chỉ tính bài đã chấm; câu chờ chấm tay (needsReview) chưa
+         tính vào điểm trung bình mà được đếm riêng ở pendingReview.
+         Lưu ý: endpoint chỉ đọc (GET) nên không cần vào hàng đợi mutate —
+         store.write dùng ghi atomic (tmp → rename) nên mỗi lần đọc luôn thấy
+         snapshot nhất quán, không đọc dở giữa chừng. */
+      if (req.method === 'GET' && /^\/api\/admin\/tests\/\w+\/stats$/.test(p)) {
+        const id = p.split('/')[4];
+        const t = tests().find((x) => x.id === id);
+        if (!t) return send(res, 404, { error: 'Không tìm thấy bài test' });
+        const list = subs().filter((s) => s.testId === id);
+        const sectionOf = (qid) =>
+          ((t.sections || []).find((s) => (s.questions || []).some((q) => q.id === qid)) || {}).title || '';
+        const questions = allQuestions(t).map((q) => {
+          const max = Number(q.points) || 1;
+          /* earned/max được ghi theo điểm thời điểm chấm (d.max) — nếu giáo viên
+             sửa điểm câu hỏi sau khi học viên nộp, thống kê vẫn đúng. */
+          let earnedSum = 0, denomSum = 0, graded = 0, wrong = 0, pending = 0;
+          for (const s of list) {
+            const d = s.details && s.details[q.id];
+            if (!d) continue;
+            if (d.needsReview) { pending++; continue; }
+            graded++;
+            const dm = d.max != null ? d.max : max;
+            earnedSum += d.earned || 0;
+            denomSum += dm;
+            if ((d.earned || 0) < dm) wrong++;
+          }
+          return {
+            id: q.id, type: q.type, points: max, prompt: q.prompt,
+            sectionTitle: sectionOf(q.id),
+            /* attempts = số bài thực sự chứa câu này (graded+pending), không phải
+               list.length — tránh lệch khi câu được thêm sau khi đã có bài nộp
+               cũ không chứa câu đó. */
+            attempts: graded + pending,
+            graded,
+            avgPercent: denomSum > 0 ? Math.round(earnedSum / denomSum * 1000) / 10 : null,
+            wrongCount: wrong,
+            pendingReview: pending,
+          };
+        });
+        return send(res, 200, { testId: id, title: t.title, submissionCount: list.length, questions });
       }
       /* Số liệu để hỏi xác nhận trước khi xoá */
       if (req.method === 'GET' && /^\/api\/admin\/tests\/\w+\/impact$/.test(p)) {
@@ -502,24 +573,29 @@ const server = http.createServer(async (req, res) => {
       }
       if (req.method === 'DELETE' && /^\/api\/admin\/submissions\/\w+$/.test(p)) {
         const id = p.split('/').pop();
-        saveSubs(subs().filter((s) => s.id !== id));
+        await mutate(() => saveSubs(subs().filter((s) => s.id !== id)));
         return send(res, 200, { ok: true });
       }
       /* chấm tay: {submissionId, questionId, earned} */
       if (api('POST', '/api/admin/grade')) {
         const { submissionId, questionId, earned } = await readJson(req);
-        const all = subs();
-        const s = all.find((x) => x.id === submissionId);
-        if (!s) return send(res, 404, { error: 'Không tìm thấy bài làm' });
-        const d = s.details[questionId];
-        if (!d) return send(res, 404, { error: 'Không tìm thấy câu hỏi' });
-        d.earned = Math.max(0, Math.min(Number(earned) || 0, d.max));
-        d.needsReview = false;
-        d.correct = d.earned === d.max;
-        s.score = Math.round(Object.values(s.details).reduce((a, x) => a + x.earned, 0) * 100) / 100;
-        s.needsReview = Object.values(s.details).some((x) => x.needsReview);
-        saveSubs(all);
-        return send(res, 200, { score: s.score, needsReview: s.needsReview });
+        const outcome = await mutate(() => {
+          const all = subs();
+          const s = all.find((x) => x.id === submissionId);
+          if (!s) return { notFound: 'sub' };
+          const d = s.details && s.details[questionId];
+          if (!d) return { notFound: 'q' };
+          d.earned = Math.max(0, Math.min(Number(earned) || 0, d.max));
+          d.needsReview = false;
+          d.correct = d.earned === d.max;
+          s.score = Math.round(Object.values(s.details).reduce((a, x) => a + x.earned, 0) * 100) / 100;
+          s.needsReview = Object.values(s.details).some((x) => x.needsReview);
+          saveSubs(all);
+          return { score: s.score, needsReview: s.needsReview };
+        });
+        if (outcome.notFound === 'sub') return send(res, 404, { error: 'Không tìm thấy bài làm' });
+        if (outcome.notFound === 'q') return send(res, 404, { error: 'Không tìm thấy câu hỏi' });
+        return send(res, 200, outcome);
       }
       if (api('GET', '/api/admin/export')) {
         const testId = url.searchParams.get('testId');
@@ -592,5 +668,5 @@ if (require.main === module) {
 
 module.exports = {
   server, computeLate, gradeQuestion, gradeSubmission, sanitizeTest,
-  directAudioUrl, isPublicHttpUrl,
+  directAudioUrl, isPublicHttpUrl, mutate, store,
 };

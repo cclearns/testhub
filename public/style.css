@@ -428,6 +428,10 @@ th {
   font-weight: 600;
   color: var(--color-muted);
 }
+/* Câu cả lớp yếu (trung bình dưới 50%) — nền đỏ son nhạt, như giấy báo lỗi */
+tr.row-weak td {
+  background: var(--color-error-2);
+}
 
 /* ── Kết quả ─────────────────────────────────────────────────────────── */
 .figure {
