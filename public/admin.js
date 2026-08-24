@@ -499,10 +499,88 @@ async function saveDraft() {
 }
 
 /* ---------- kết quả & chấm tay ---------- */
-async function showSubmissions(testId) {
+const subsState = {
+  testId: null,
+  list: [],
+  search: '',
+  filterStatus: 'all',
+  filterClass: 'all',
+  sortCol: 'submittedAt',
+  sortAsc: false,
+  page: 1,
+  pageSize: 20,
+  selected: new Set(),
+  allFilteredSelected: false,
+};
+
+async function showSubmissions(testId, keepState = false) {
   show('subsView');
+  if (!keepState || subsState.testId !== testId) {
+    subsState.testId = testId;
+    subsState.search = '';
+    subsState.filterStatus = 'all';
+    subsState.filterClass = 'all';
+    subsState.sortCol = 'submittedAt';
+    subsState.sortAsc = false;
+    subsState.page = 1;
+    subsState.selected.clear();
+    subsState.allFilteredSelected = false;
+  }
   const list = await api('/api/admin/submissions' + (testId ? '?testId=' + testId : ''));
-  const hasClass = list.some(s => (s.studentClass || '').trim());   /* cột Lớp chỉ hiện khi có dữ liệu */
+  subsState.list = list;
+
+  // Xoá những ID không còn tồn tại khỏi selected set
+  const idSet = new Set(list.map(s => s.id));
+  for (const id of subsState.selected) {
+    if (!idSet.has(id)) subsState.selected.delete(id);
+  }
+
+  renderSubmissionsView();
+  if (testId) loadQuestionStats(testId);
+}
+
+function getFilteredAndSortedSubmissions() {
+  const { list, search, filterStatus, filterClass, sortCol, sortAsc } = subsState;
+  let res = list;
+
+  if (search.trim()) {
+    const q = search.trim().toLowerCase();
+    res = res.filter(s => (s.studentName || '').toLowerCase().includes(q));
+  }
+
+  if (filterStatus === 'needsReview') res = res.filter(s => s.needsReview);
+  else if (filterStatus === 'late') res = res.filter(s => s.late);
+  else if (filterStatus === 'completed') res = res.filter(s => !s.needsReview);
+
+  if (filterClass !== 'all') {
+    res = res.filter(s => (s.studentClass || '').trim() === filterClass);
+  }
+
+  res = [...res].sort((a, b) => {
+    let diff = 0;
+    if (sortCol === 'studentName') {
+      diff = (a.studentName || '').localeCompare(b.studentName || '', 'vi');
+    } else if (sortCol === 'studentClass') {
+      diff = (a.studentClass || '').localeCompare(b.studentClass || '', 'vi');
+    } else if (sortCol === 'testTitle') {
+      diff = (a.testTitle || '').localeCompare(b.testTitle || '', 'vi');
+    } else if (sortCol === 'score') {
+      const pa = a.maxScore ? a.score / a.maxScore : 0;
+      const pb = b.maxScore ? b.score / b.maxScore : 0;
+      diff = pa - pb;
+    } else if (sortCol === 'late') {
+      diff = (a.late ? 1 : 0) - (b.late ? 1 : 0);
+    } else if (sortCol === 'submittedAt') {
+      diff = new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime();
+    }
+    return sortAsc ? diff : -diff;
+  });
+
+  return res;
+}
+
+function renderSubmissionsView() {
+  const { testId, list } = subsState;
   const avg = list.length
     ? Math.round(list.reduce((a, s) => a + (s.maxScore ? s.score / s.maxScore : 0), 0) / list.length * 1000) / 10 : 0;
 
@@ -518,30 +596,334 @@ async function showSubmissions(testId) {
       <div class="stat"><div class="label">Muộn</div><div class="figure">${list.filter(s => s.late).length}</div></div>
     </div>
     ${testId ? '<div id="qstats"></div>' : ''}
-    <div class="card"><div class="table-scroll"><table><thead><tr>
-      <th>Họ tên</th>${hasClass ? '<th>Lớp</th>' : ''}<th>Bài test</th><th>Điểm</th><th>%</th><th>Muộn</th><th>Nộp lúc</th><th></th>
-    </tr></thead><tbody>
-      ${list.map(s => `<tr>
-        <td>${esc(s.studentName)}</td>${hasClass ? `<td>${esc(s.studentClass || '')}</td>` : ''}<td>${esc(s.testTitle)}</td>
-        <td>${s.score}/${s.maxScore}</td>
-        <td>${s.maxScore ? Math.round(s.score / s.maxScore * 1000) / 10 : 0}%</td>
-        <td>${s.late ? '<span class="pill late">Muộn</span>' : '<span class="small muted">—</span>'}</td>
-        <td class="small muted">${new Date(s.submittedAt).toLocaleString('vi-VN')}</td>
-        <td>${s.needsReview ? '<span class="pill">cần chấm</span> ' : ''}
-          <button class="sm" data-view="${s.id}">Xem</button>
-          <button class="sm danger" data-delsub="${s.id}">Xoá</button></td>
-      </tr>`).join('') || `<tr><td colspan="${hasClass ? 8 : 7}" class="muted">Chưa có bài nộp nào.</td></tr>`}
-    </tbody></table></div></div>
+    <div class="card" id="subTableCard">
+      <!-- Toolbar, bảng bài nộp & phân trang -->
+    </div>
     <div id="detail"></div>`;
 
-  $('subsView').querySelectorAll('[data-view]').forEach(b => b.onclick = () =>
-    viewSubmission(list.find(s => s.id === b.dataset.view)));
-  $('subsView').querySelectorAll('[data-delsub]').forEach(b => b.onclick = async () => {
-    if (!confirm('Xoá bài nộp này?')) return;
-    await api('/api/admin/submissions/' + b.dataset.delsub, { method: 'DELETE' });
-    showSubmissions(testId);
+  updateSubsTable();
+}
+
+function updateSubsTable() {
+  const { list, testId, sortCol, sortAsc } = subsState;
+  const filtered = getFilteredAndSortedSubmissions();
+  const hasClass = list.some(s => (s.studentClass || '').trim());
+  const classes = [...new Set(list.map(s => (s.studentClass || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'));
+  const isFiltered = Boolean(subsState.search || subsState.filterStatus !== 'all' || subsState.filterClass !== 'all');
+
+  const total = filtered.length;
+  const pageSize = subsState.pageSize === 'all' ? total : Number(subsState.pageSize);
+  const totalPages = Math.max(1, Math.ceil(total / (pageSize || 1)));
+  if (subsState.page > totalPages) subsState.page = totalPages;
+  if (subsState.page < 1) subsState.page = 1;
+
+  const curPage = subsState.page;
+  const startIdx = subsState.pageSize === 'all' ? 0 : (curPage - 1) * pageSize;
+  const endIdx = subsState.pageSize === 'all' ? total : Math.min(startIdx + pageSize, total);
+  const pageItems = filtered.slice(startIdx, endIdx);
+
+  const pageIds = pageItems.map(s => s.id);
+  const pageSelectedCount = pageIds.filter(id => subsState.selected.has(id)).length;
+  const hasSelection = subsState.selected.size > 0;
+
+  const sortIcon = (col) => {
+    if (sortCol !== col) return '<span class="sort-icon muted">↕</span>';
+    return sortAsc ? '<span class="sort-icon active">▲</span>' : '<span class="sort-icon active">▼</span>';
+  };
+
+  const showPagination = total > 10 || list.length > 20 || totalPages > 1;
+
+  $('subTableCard').innerHTML = `
+    <div class="subs-toolbar row" style="gap:var(--space-sm); align-items:center;">
+      <div class="grow" style="min-width:13rem;">
+        <input type="text" id="subSearch" placeholder="Tìm theo tên học viên..." value="${esc(subsState.search)}" style="margin:0;">
+      </div>
+      <div style="min-width:10rem;">
+        <select id="subStatus" style="margin:0;">
+          <option value="all" ${subsState.filterStatus === 'all' ? 'selected' : ''}>Tất cả trạng thái</option>
+          <option value="needsReview" ${subsState.filterStatus === 'needsReview' ? 'selected' : ''}>Cần chấm tay (${list.filter(s => s.needsReview).length})</option>
+          <option value="late" ${subsState.filterStatus === 'late' ? 'selected' : ''}>Nộp muộn (${list.filter(s => s.late).length})</option>
+          <option value="completed" ${subsState.filterStatus === 'completed' ? 'selected' : ''}>Đã chấm xong (${list.filter(s => !s.needsReview).length})</option>
+        </select>
+      </div>
+      ${classes.length > 0 ? `
+      <div style="min-width:8rem;">
+        <select id="subClass" style="margin:0;">
+          <option value="all" ${subsState.filterClass === 'all' ? 'selected' : ''}>Tất cả lớp</option>
+          ${classes.map(c => `<option value="${esc(c)}" ${subsState.filterClass === c ? 'selected' : ''}>Lớp ${esc(c)}</option>`).join('')}
+        </select>
+      </div>` : ''}
+      <button class="sm ghost" id="subResetFilter" style="display:${isFiltered ? 'inline-block' : 'none'};">Xoá lọc</button>
+    </div>
+
+    ${hasSelection ? `
+    <div class="bulk-bar">
+      <div class="bulk-info">
+        <span>☑ Đã chọn <strong>${subsState.selected.size}</strong> bài nộp</span>
+        ${pageSelectedCount === pageItems.length && total > pageItems.length && !subsState.allFilteredSelected ? `
+          <span>·</span>
+          <button class="bulk-link" id="selectAllFiltered">Chọn tất cả ${total} bài khớp bộ lọc</button>
+        ` : ''}
+        ${subsState.allFilteredSelected ? `
+          <span class="muted small">(Tất cả ${subsState.selected.size} bài khớp bộ lọc)</span>
+        ` : ''}
+      </div>
+      <div class="bulk-actions">
+        <button class="sm ghost" id="bulkDeselect">Bỏ chọn</button>
+        <button class="sm danger" id="bulkDelete">Xoá ${subsState.selected.size} bài đã chọn</button>
+      </div>
+    </div>` : ''}
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th class="th-check">
+              <input type="checkbox" id="checkAllSubs" title="Chọn tất cả bài trên trang này" aria-label="Chọn tất cả">
+            </th>
+            <th class="th-sortable" data-sort="studentName">Họ tên ${sortIcon('studentName')}</th>
+            ${hasClass ? `<th class="th-sortable" data-sort="studentClass">Lớp ${sortIcon('studentClass')}</th>` : ''}
+            <th class="th-sortable" data-sort="testTitle">Bài test ${sortIcon('testTitle')}</th>
+            <th class="th-sortable" data-sort="score">Điểm ${sortIcon('score')}</th>
+            <th class="th-sortable" data-sort="late">Muộn ${sortIcon('late')}</th>
+            <th class="th-sortable" data-sort="submittedAt">Nộp lúc ${sortIcon('submittedAt')}</th>
+            <th style="text-align:right;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${pageItems.map(s => {
+            const isSelected = subsState.selected.has(s.id);
+            const rowClass = s.needsReview ? 'row-review' : s.late ? 'row-late' : '';
+            return `
+            <tr class="${rowClass} ${isSelected ? 'row-selected' : ''}">
+              <td class="td-check">
+                <input type="checkbox" data-subchk="${s.id}" ${isSelected ? 'checked' : ''} aria-label="Chọn bài của ${esc(s.studentName)}">
+              </td>
+              <td><strong>${esc(s.studentName)}</strong></td>
+              ${hasClass ? `<td>${esc(s.studentClass || '—')}</td>` : ''}
+              <td>${esc(s.testTitle)}</td>
+              <td><strong>${s.score}/${s.maxScore}</strong> <span class="muted small">(${s.maxScore ? Math.round(s.score / s.maxScore * 1000) / 10 : 0}%)</span></td>
+              <td>${s.late ? '<span class="pill late">Muộn</span>' : '<span class="small muted">—</span>'}</td>
+              <td class="small muted">${new Date(s.submittedAt).toLocaleString('vi-VN')}</td>
+              <td style="text-align:right; white-space:nowrap;">
+                ${s.needsReview ? '<span class="pill" style="margin-right:6px">cần chấm</span>' : ''}
+                <button class="sm" data-view="${s.id}">Xem bài</button>
+              </td>
+            </tr>`;
+          }).join('') || `<tr><td colspan="${hasClass ? 8 : 7}" class="muted" style="text-align:center;padding:var(--space-lg);">${isFiltered ? 'Không có bài nộp nào phù hợp bộ lọc.' : 'Chưa có bài nộp nào.'}</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+
+    ${showPagination && total > 0 ? `
+    <div class="pagination-row">
+      <div class="small muted">
+        Hiển thị <strong>${total === 0 ? 0 : startIdx + 1}–${endIdx}</strong> trong <strong>${total}</strong> bài nộp
+        ${isFiltered ? ` (lọc từ ${list.length} bài)` : ''}
+      </div>
+      <div class="pagination-actions">
+        <label class="small muted" style="display:flex;align-items:center;gap:6px;">
+          <span>Mỗi trang:</span>
+          <select id="subPageSize" style="width:auto;padding:2px 8px;font-size:var(--text-sm);margin:0;">
+            <option value="10" ${subsState.pageSize == 10 ? 'selected' : ''}>10</option>
+            <option value="20" ${subsState.pageSize == 20 ? 'selected' : ''}>20</option>
+            <option value="50" ${subsState.pageSize == 50 ? 'selected' : ''}>50</option>
+            <option value="all" ${subsState.pageSize === 'all' ? 'selected' : ''}>Tất cả</option>
+          </select>
+        </label>
+        ${totalPages > 1 ? `
+        <div class="row" style="gap:4px;">
+          <button class="sm" id="subPrevPage" ${curPage <= 1 ? 'disabled' : ''}>← Trước</button>
+          <span class="small muted" style="padding:0 6px;align-self:center;">Trang <strong>${curPage}</strong> / ${totalPages}</span>
+          <button class="sm" id="subNextPage" ${curPage >= totalPages ? 'disabled' : ''}>Tiếp →</button>
+        </div>` : ''}
+      </div>
+    </div>` : ''}
+  `;
+
+  // Bind header checkbox
+  const headCheck = $('checkAllSubs');
+  if (headCheck) {
+    if (pageItems.length === 0 || pageSelectedCount === 0) {
+      headCheck.checked = false;
+      headCheck.indeterminate = false;
+    } else if (pageSelectedCount === pageItems.length) {
+      headCheck.checked = true;
+      headCheck.indeterminate = false;
+    } else {
+      headCheck.checked = false;
+      headCheck.indeterminate = true;
+    }
+
+    headCheck.onchange = () => {
+      if (pageSelectedCount === pageItems.length) {
+        pageItems.forEach(s => subsState.selected.delete(s.id));
+        subsState.allFilteredSelected = false;
+      } else {
+        pageItems.forEach(s => subsState.selected.add(s.id));
+      }
+      updateSubsTable();
+    };
+  }
+
+  // Bind row checkboxes
+  $('subTableCard').querySelectorAll('[data-subchk]').forEach(chk => {
+    chk.onchange = (e) => {
+      e.stopPropagation();
+      const id = chk.dataset.subchk;
+      if (chk.checked) {
+        subsState.selected.add(id);
+      } else {
+        subsState.selected.delete(id);
+        subsState.allFilteredSelected = false;
+      }
+      updateSubsTable();
+    };
   });
-  if (testId) loadQuestionStats(testId);
+
+  // Bind bulk action bar handlers
+  const deselectBtn = $('bulkDeselect');
+  if (deselectBtn) {
+    deselectBtn.onclick = () => {
+      subsState.selected.clear();
+      subsState.allFilteredSelected = false;
+      updateSubsTable();
+    };
+  }
+
+  const selectAllFilteredBtn = $('selectAllFiltered');
+  if (selectAllFilteredBtn) {
+    selectAllFilteredBtn.onclick = () => {
+      filtered.forEach(s => subsState.selected.add(s.id));
+      subsState.allFilteredSelected = true;
+      updateSubsTable();
+    };
+  }
+
+  const bulkDeleteBtn = $('bulkDelete');
+  if (bulkDeleteBtn) {
+    bulkDeleteBtn.onclick = async () => {
+      const count = subsState.selected.size;
+      if (count === 0) return;
+      const ids = [...subsState.selected];
+      const names = ids.slice(0, 5).map(id => {
+        const s = subsState.list.find(x => x.id === id);
+        return s ? s.studentName : id;
+      });
+      const msg = count <= 5
+        ? `Xoá ${count} bài nộp của: ${names.join(', ')}?\n\nHành động này không thể hoàn tác.`
+        : `Xoá ${count} bài nộp đã chọn?\n\nHành động này không thể hoàn tác.`;
+      if (!confirm(msg)) return;
+
+      const r = await api('/api/admin/submissions/batch-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      });
+      if (r.error) return alert(r.error);
+
+      subsState.selected.clear();
+      subsState.allFilteredSelected = false;
+      $('detail').innerHTML = '';
+      showSubmissions(subsState.testId, true);
+    };
+  }
+
+  // Bind toolbar inputs
+  const searchInput = $('subSearch');
+  searchInput.oninput = () => {
+    subsState.search = searchInput.value;
+    subsState.page = 1;
+    subsState.selected.clear();
+    subsState.allFilteredSelected = false;
+    updateSubsTable();
+  };
+
+  const statusSelect = $('subStatus');
+  statusSelect.onchange = () => {
+    subsState.filterStatus = statusSelect.value;
+    subsState.page = 1;
+    subsState.selected.clear();
+    subsState.allFilteredSelected = false;
+    updateSubsTable();
+  };
+
+  const classSelect = $('subClass');
+  if (classSelect) {
+    classSelect.onchange = () => {
+      subsState.filterClass = classSelect.value;
+      subsState.page = 1;
+      subsState.selected.clear();
+      subsState.allFilteredSelected = false;
+      updateSubsTable();
+    };
+  }
+
+  const resetBtn = $('subResetFilter');
+  if (resetBtn) {
+    resetBtn.onclick = () => {
+      subsState.search = '';
+      subsState.filterStatus = 'all';
+      subsState.filterClass = 'all';
+      subsState.page = 1;
+      subsState.selected.clear();
+      subsState.allFilteredSelected = false;
+      searchInput.value = '';
+      statusSelect.value = 'all';
+      if (classSelect) classSelect.value = 'all';
+      updateSubsTable();
+    };
+  }
+
+  // Sort click handlers
+  $('subTableCard').querySelectorAll('th[data-sort]').forEach(th => {
+    th.onclick = () => {
+      const col = th.dataset.sort;
+      if (subsState.sortCol === col) {
+        subsState.sortAsc = !subsState.sortAsc;
+      } else {
+        subsState.sortCol = col;
+        subsState.sortAsc = (col === 'studentName' || col === 'studentClass' || col === 'testTitle');
+      }
+      updateSubsTable();
+    };
+  });
+
+  // Page size handler
+  const pageSizeSelect = $('subPageSize');
+  if (pageSizeSelect) {
+    pageSizeSelect.onchange = () => {
+      subsState.pageSize = pageSizeSelect.value;
+      subsState.page = 1;
+      updateSubsTable();
+    };
+  }
+
+  // Pagination button handlers
+  const prevBtn = $('subPrevPage');
+  if (prevBtn) {
+    prevBtn.onclick = () => {
+      if (subsState.page > 1) {
+        subsState.page--;
+        updateSubsTable();
+      }
+    };
+  }
+
+  const nextBtn = $('subNextPage');
+  if (nextBtn) {
+    nextBtn.onclick = () => {
+      if (subsState.page < totalPages) {
+        subsState.page++;
+        updateSubsTable();
+      }
+    };
+  }
+
+  // Action button handlers
+  $('subTableCard').querySelectorAll('[data-view]').forEach(b => {
+    b.onclick = () => viewSubmission(list.find(s => s.id === b.dataset.view));
+  });
 }
 
 /* Thống kê theo câu hỏi — câu sai nhiều nhất lên trên, để biết dạy lại chỗ nào.
@@ -592,10 +974,16 @@ async function loadQuestionStats(testId) {
 async function viewSubmission(s) {
   const test = await api('/api/tests/' + s.testId + '?full=1');
   const qs = (test.sections || []).flatMap(x => x.questions || []);
-  $('detail').innerHTML = `<div class="card"><h3>Bài làm của ${esc(s.studentName)}</h3>
-    <p class="small muted">Thời gian làm: ${s.durationSec ? Math.round(s.durationSec / 60) + ' phút' : '—'}
-      ${s.late ? ' · <span class="pill late">Muộn</span>' : ''}
-      ${Object.keys(s.audioPlays || {}).length ? ' · số lần nghe: ' + Object.values(s.audioPlays).join(', ') : ''}</p>
+  $('detail').innerHTML = `<div class="card">
+    <div class="row" style="justify-content:space-between; align-items:flex-start;">
+      <div>
+        <h3>Bài làm của ${esc(s.studentName)}</h3>
+        <p class="small muted">Thời gian làm: ${s.durationSec ? Math.round(s.durationSec / 60) + ' phút' : '—'}
+          ${s.late ? ' · <span class="pill late">Muộn</span>' : ''}
+          ${Object.keys(s.audioPlays || {}).length ? ' · số lần nghe: ' + Object.values(s.audioPlays).join(', ') : ''}</p>
+      </div>
+      <button class="sm ghost" id="closeDetailTop">✕ Đóng</button>
+    </div>
     ${qs.map(q => {
       const d = s.details[q.id] || {};
       const mark = d.correct === true ? '<span class="correct">✔</span>'
@@ -607,7 +995,22 @@ async function viewSubmission(s) {
             style="width:90px" id="g_${q.id}" value="${d.earned || 0}">
           <button class="sm primary" data-grade="${q.id}">Cho điểm</button></div>` : ''}
       </div>`;
-    }).join('')}</div>`;
+    }).join('')}
+    <div class="row" style="margin-top:var(--space-xl); padding-top:var(--space-md); border-top:var(--rule-hair) solid var(--color-rule); justify-content:space-between;">
+      <button class="sm danger" id="delThisSub">Xoá bài nộp này</button>
+      <button class="sm ghost" id="closeDetailBottom">Đóng chi tiết</button>
+    </div>
+  </div>`;
+
+  $('closeDetailTop').onclick = () => { $('detail').innerHTML = ''; };
+  $('closeDetailBottom').onclick = () => { $('detail').innerHTML = ''; };
+
+  $('delThisSub').onclick = async () => {
+    if (!confirm(`Xoá bài nộp của học viên "${s.studentName}"?`)) return;
+    await api('/api/admin/submissions/' + s.id, { method: 'DELETE' });
+    $('detail').innerHTML = '';
+    showSubmissions(s.testId, true);
+  };
 
   $('detail').querySelectorAll('[data-grade]').forEach(b => b.onclick = async () => {
     const r = await api('/api/admin/grade', {
@@ -619,7 +1022,7 @@ async function viewSubmission(s) {
     });
     if (r.error) return alert(r.error);
     alert('Đã lưu. Tổng điểm mới: ' + r.score);
-    showSubmissions(s.testId);
+    showSubmissions(s.testId, true);
   });
   $('detail').scrollIntoView({ behavior: 'smooth' });
 }

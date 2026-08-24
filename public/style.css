@@ -409,7 +409,11 @@ button.sm { padding: var(--space-3xs) var(--space-sm); font-size: var(--text-xs)
 /* ── Bảng ────────────────────────────────────────────────────────────── */
 a:has(button) { border-bottom: 0; }
 
-.table-scroll { overflow-x: auto; }
+.table-scroll {
+  overflow-x: auto;
+  max-height: 72vh;
+  position: relative;
+}
 .table-scroll table { min-width: 44rem; }
 table {
   width: 100%;
@@ -428,9 +432,142 @@ th {
   font-weight: 600;
   color: var(--color-muted);
 }
+.table-scroll table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--color-paper-2);
+  z-index: 2;
+  box-shadow: 0 1px 0 var(--color-rule);
+}
+th.th-sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: color var(--dur-micro) var(--ease-out);
+}
+th.th-sortable:hover {
+  color: var(--color-ink);
+}
+th.th-sortable .sort-icon {
+  display: inline-block;
+  margin-left: var(--space-3xs);
+  font-size: 0.75em;
+  vertical-align: middle;
+}
+th.th-sortable .sort-icon.active {
+  color: var(--color-accent);
+  font-weight: bold;
+}
+tbody tr:hover td {
+  background: var(--color-paper-3);
+}
 /* Câu cả lớp yếu (trung bình dưới 50%) — nền đỏ son nhạt, như giấy báo lỗi */
 tr.row-weak td {
   background: var(--color-error-2);
+}
+/* Checkbox cột đầu */
+td.td-check, th.th-check {
+  width: 2.5rem;
+  min-width: 2.5rem;
+  max-width: 2.5rem;
+  text-align: center;
+  padding: var(--space-sm) var(--space-xs);
+  vertical-align: middle;
+}
+td.td-check input[type=checkbox], th.th-check input[type=checkbox] {
+  cursor: pointer;
+  accent-color: var(--color-accent);
+  width: 1.1rem;
+  height: 1.1rem;
+  margin: 0;
+  vertical-align: middle;
+}
+
+/* Hàng đang được chọn */
+tr.row-selected td {
+  background: var(--color-accent-2) !important;
+}
+tr.row-selected td:first-child {
+  border-left: 4px solid var(--color-accent) !important;
+}
+
+/* Hàng cần chấm tay — nền vàng ấm rõ ràng + viền trái nổi bật */
+tr.row-review td {
+  background: oklch(93% 0.08 80);
+}
+tr.row-review td:first-child {
+  border-left: 4px solid var(--color-warn);
+}
+tr.row-review:hover td {
+  background: oklch(89% 0.10 80);
+}
+/* Hàng nộp muộn — nền cam đỏ nhạt + viền trái đỏ */
+tr.row-late td {
+  background: oklch(94% 0.06 35);
+}
+tr.row-late td:first-child {
+  border-left: 4px solid var(--color-error);
+}
+tr.row-late:hover td {
+  background: oklch(90% 0.08 35);
+}
+
+/* Toolbar & Phân trang kết quả */
+.subs-toolbar {
+  padding-bottom: var(--space-md);
+  margin-bottom: var(--space-sm);
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+}
+.bulk-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  padding: var(--space-xs) var(--space-md);
+  background: var(--color-accent-2);
+  border: var(--rule-thick) solid var(--color-accent);
+  border-radius: var(--radius-input);
+  margin-bottom: var(--space-sm);
+}
+.bulk-bar .bulk-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--text-sm);
+  color: var(--color-accent-ink);
+  font-weight: 500;
+}
+.bulk-bar .bulk-link {
+  color: var(--color-accent-ink);
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: var(--text-sm);
+  font-family: inherit;
+  font-weight: 600;
+}
+.bulk-bar .bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+.pagination-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+  padding-top: var(--space-sm);
+}
+.pagination-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
 }
 
 /* ── Kết quả ─────────────────────────────────────────────────────────── */
