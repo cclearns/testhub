@@ -583,6 +583,8 @@ function renderSubmissionsView() {
   const { testId, list } = subsState;
   const avg = list.length
     ? Math.round(list.reduce((a, s) => a + (s.maxScore ? s.score / s.maxScore : 0), 0) / list.length * 1000) / 10 : 0;
+  const classes = [...new Set(list.map(s => (s.studentClass || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'));
+  const isFiltered = Boolean(subsState.search || subsState.filterStatus !== 'all' || subsState.filterClass !== 'all');
 
   $('subsView').innerHTML = `
     <div class="row" style="margin-bottom:14px">
@@ -597,9 +599,78 @@ function renderSubmissionsView() {
     </div>
     ${testId ? '<div id="qstats"></div>' : ''}
     <div class="card" id="subTableCard">
-      <!-- Toolbar, bảng bài nộp & phân trang -->
+      <div class="subs-toolbar row" style="gap:var(--space-sm); align-items:center;">
+        <div class="grow" style="min-width:13rem;">
+          <input type="text" id="subSearch" placeholder="Tìm theo tên học viên..." value="${esc(subsState.search)}" style="margin:0;">
+        </div>
+        <div style="min-width:10rem;">
+          <select id="subStatus" style="margin:0;">
+            <option value="all" ${subsState.filterStatus === 'all' ? 'selected' : ''}>Tất cả trạng thái</option>
+            <option value="needsReview" ${subsState.filterStatus === 'needsReview' ? 'selected' : ''}>Cần chấm tay (${list.filter(s => s.needsReview).length})</option>
+            <option value="late" ${subsState.filterStatus === 'late' ? 'selected' : ''}>Nộp muộn (${list.filter(s => s.late).length})</option>
+            <option value="completed" ${subsState.filterStatus === 'completed' ? 'selected' : ''}>Đã chấm xong (${list.filter(s => !s.needsReview).length})</option>
+          </select>
+        </div>
+        ${classes.length > 0 ? `
+        <div style="min-width:8rem;">
+          <select id="subClass" style="margin:0;">
+            <option value="all" ${subsState.filterClass === 'all' ? 'selected' : ''}>Tất cả lớp</option>
+            ${classes.map(c => `<option value="${esc(c)}" ${subsState.filterClass === c ? 'selected' : ''}>Lớp ${esc(c)}</option>`).join('')}
+          </select>
+        </div>` : ''}
+        <button class="sm ghost" id="subResetFilter" style="display:${isFiltered ? 'inline-block' : 'none'};">Xoá lọc</button>
+      </div>
+      <div id="subBulkArea"></div>
+      <div id="subTableArea"></div>
+      <div id="subPaginationArea"></div>
     </div>
     <div id="detail"></div>`;
+
+  // Gắn sự kiện toolbar 1 lần duy nhất ở đây để không bị mất focus khi gõ tìm kiếm
+  const searchInput = $('subSearch');
+  searchInput.oninput = () => {
+    subsState.search = searchInput.value;
+    subsState.page = 1;
+    subsState.selected.clear();
+    subsState.allFilteredSelected = false;
+    updateSubsTable();
+  };
+
+  const statusSelect = $('subStatus');
+  statusSelect.onchange = () => {
+    subsState.filterStatus = statusSelect.value;
+    subsState.page = 1;
+    subsState.selected.clear();
+    subsState.allFilteredSelected = false;
+    updateSubsTable();
+  };
+
+  const classSelect = $('subClass');
+  if (classSelect) {
+    classSelect.onchange = () => {
+      subsState.filterClass = classSelect.value;
+      subsState.page = 1;
+      subsState.selected.clear();
+      subsState.allFilteredSelected = false;
+      updateSubsTable();
+    };
+  }
+
+  const resetBtn = $('subResetFilter');
+  if (resetBtn) {
+    resetBtn.onclick = () => {
+      subsState.search = '';
+      subsState.filterStatus = 'all';
+      subsState.filterClass = 'all';
+      subsState.page = 1;
+      subsState.selected.clear();
+      subsState.allFilteredSelected = false;
+      searchInput.value = '';
+      statusSelect.value = 'all';
+      if (classSelect) classSelect.value = 'all';
+      updateSubsTable();
+    };
+  }
 
   updateSubsTable();
 }
@@ -608,8 +679,12 @@ function updateSubsTable() {
   const { list, testId, sortCol, sortAsc } = subsState;
   const filtered = getFilteredAndSortedSubmissions();
   const hasClass = list.some(s => (s.studentClass || '').trim());
-  const classes = [...new Set(list.map(s => (s.studentClass || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'));
   const isFiltered = Boolean(subsState.search || subsState.filterStatus !== 'all' || subsState.filterClass !== 'all');
+
+  const resetBtn = $('subResetFilter');
+  if (resetBtn) {
+    resetBtn.style.display = isFiltered ? 'inline-block' : 'none';
+  }
 
   const total = filtered.length;
   const pageSize = subsState.pageSize === 'all' ? total : Number(subsState.pageSize);
@@ -633,113 +708,102 @@ function updateSubsTable() {
 
   const showPagination = total > 10 || list.length > 20 || totalPages > 1;
 
-  $('subTableCard').innerHTML = `
-    <div class="subs-toolbar row" style="gap:var(--space-sm); align-items:center;">
-      <div class="grow" style="min-width:13rem;">
-        <input type="text" id="subSearch" placeholder="Tìm theo tên học viên..." value="${esc(subsState.search)}" style="margin:0;">
-      </div>
-      <div style="min-width:10rem;">
-        <select id="subStatus" style="margin:0;">
-          <option value="all" ${subsState.filterStatus === 'all' ? 'selected' : ''}>Tất cả trạng thái</option>
-          <option value="needsReview" ${subsState.filterStatus === 'needsReview' ? 'selected' : ''}>Cần chấm tay (${list.filter(s => s.needsReview).length})</option>
-          <option value="late" ${subsState.filterStatus === 'late' ? 'selected' : ''}>Nộp muộn (${list.filter(s => s.late).length})</option>
-          <option value="completed" ${subsState.filterStatus === 'completed' ? 'selected' : ''}>Đã chấm xong (${list.filter(s => !s.needsReview).length})</option>
-        </select>
-      </div>
-      ${classes.length > 0 ? `
-      <div style="min-width:8rem;">
-        <select id="subClass" style="margin:0;">
-          <option value="all" ${subsState.filterClass === 'all' ? 'selected' : ''}>Tất cả lớp</option>
-          ${classes.map(c => `<option value="${esc(c)}" ${subsState.filterClass === c ? 'selected' : ''}>Lớp ${esc(c)}</option>`).join('')}
-        </select>
-      </div>` : ''}
-      <button class="sm ghost" id="subResetFilter" style="display:${isFiltered ? 'inline-block' : 'none'};">Xoá lọc</button>
-    </div>
+  // 1. Render Bulk Bar
+  const bulkArea = $('subBulkArea');
+  if (bulkArea) {
+    bulkArea.innerHTML = hasSelection ? `
+      <div class="bulk-bar">
+        <div class="bulk-info">
+          <span>☑ Đã chọn <strong>${subsState.selected.size}</strong> bài nộp</span>
+          ${pageSelectedCount === pageItems.length && total > pageItems.length && !subsState.allFilteredSelected ? `
+            <span>·</span>
+            <button class="bulk-link" id="selectAllFiltered">Chọn tất cả ${total} bài khớp bộ lọc</button>
+          ` : ''}
+          ${subsState.allFilteredSelected ? `
+            <span class="muted small">(Tất cả ${subsState.selected.size} bài khớp bộ lọc)</span>
+          ` : ''}
+        </div>
+        <div class="bulk-actions">
+          <button class="sm ghost" id="bulkDeselect">Bỏ chọn</button>
+          <button class="sm danger" id="bulkDelete">Xoá ${subsState.selected.size} bài đã chọn</button>
+        </div>
+      </div>` : '';
+  }
 
-    ${hasSelection ? `
-    <div class="bulk-bar">
-      <div class="bulk-info">
-        <span>☑ Đã chọn <strong>${subsState.selected.size}</strong> bài nộp</span>
-        ${pageSelectedCount === pageItems.length && total > pageItems.length && !subsState.allFilteredSelected ? `
-          <span>·</span>
-          <button class="bulk-link" id="selectAllFiltered">Chọn tất cả ${total} bài khớp bộ lọc</button>
-        ` : ''}
-        ${subsState.allFilteredSelected ? `
-          <span class="muted small">(Tất cả ${subsState.selected.size} bài khớp bộ lọc)</span>
-        ` : ''}
-      </div>
-      <div class="bulk-actions">
-        <button class="sm ghost" id="bulkDeselect">Bỏ chọn</button>
-        <button class="sm danger" id="bulkDelete">Xoá ${subsState.selected.size} bài đã chọn</button>
-      </div>
-    </div>` : ''}
+  // 2. Render Table Area
+  const tableArea = $('subTableArea');
+  if (tableArea) {
+    tableArea.innerHTML = `
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th class="th-check">
+                <input type="checkbox" id="checkAllSubs" title="Chọn tất cả bài trên trang này" aria-label="Chọn tất cả">
+              </th>
+              <th class="th-sortable" data-sort="studentName">Họ tên ${sortIcon('studentName')}</th>
+              ${hasClass ? `<th class="th-sortable" data-sort="studentClass">Lớp ${sortIcon('studentClass')}</th>` : ''}
+              <th class="th-sortable" data-sort="testTitle">Bài test ${sortIcon('testTitle')}</th>
+              <th class="th-sortable" data-sort="score">Điểm ${sortIcon('score')}</th>
+              <th class="th-sortable" data-sort="late">Muộn ${sortIcon('late')}</th>
+              <th class="th-sortable" data-sort="submittedAt">Nộp lúc ${sortIcon('submittedAt')}</th>
+              <th style="text-align:right;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${pageItems.map(s => {
+              const isSelected = subsState.selected.has(s.id);
+              const rowClass = s.needsReview ? 'row-review' : s.late ? 'row-late' : '';
+              return `
+              <tr class="${rowClass} ${isSelected ? 'row-selected' : ''}">
+                <td class="td-check">
+                  <input type="checkbox" data-subchk="${s.id}" ${isSelected ? 'checked' : ''} aria-label="Chọn bài của ${esc(s.studentName)}">
+                </td>
+                <td><strong>${esc(s.studentName)}</strong></td>
+                ${hasClass ? `<td>${esc(s.studentClass || '—')}</td>` : ''}
+                <td>${esc(s.testTitle)}</td>
+                <td><strong>${s.score}/${s.maxScore}</strong> <span class="muted small">(${s.maxScore ? Math.round(s.score / s.maxScore * 1000) / 10 : 0}%)</span></td>
+                <td>${s.late ? '<span class="pill late">Muộn</span>' : '<span class="small muted">—</span>'}</td>
+                <td class="small muted">${new Date(s.submittedAt).toLocaleString('vi-VN')}</td>
+                <td style="text-align:right; white-space:nowrap;">
+                  ${s.needsReview ? '<span class="pill" style="margin-right:6px">cần chấm</span>' : ''}
+                  <button class="sm" data-view="${s.id}">Xem bài</button>
+                </td>
+              </tr>`;
+            }).join('') || `<tr><td colspan="${hasClass ? 8 : 7}" class="muted" style="text-align:center;padding:var(--space-lg);">${isFiltered ? 'Không có bài nộp nào phù hợp bộ lọc.' : 'Chưa có bài nộp nào.'}</td></tr>`}
+          </tbody>
+        </table>
+      </div>`;
+  }
 
-    <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th class="th-check">
-              <input type="checkbox" id="checkAllSubs" title="Chọn tất cả bài trên trang này" aria-label="Chọn tất cả">
-            </th>
-            <th class="th-sortable" data-sort="studentName">Họ tên ${sortIcon('studentName')}</th>
-            ${hasClass ? `<th class="th-sortable" data-sort="studentClass">Lớp ${sortIcon('studentClass')}</th>` : ''}
-            <th class="th-sortable" data-sort="testTitle">Bài test ${sortIcon('testTitle')}</th>
-            <th class="th-sortable" data-sort="score">Điểm ${sortIcon('score')}</th>
-            <th class="th-sortable" data-sort="late">Muộn ${sortIcon('late')}</th>
-            <th class="th-sortable" data-sort="submittedAt">Nộp lúc ${sortIcon('submittedAt')}</th>
-            <th style="text-align:right;"></th>
-          </tr>
-        </thead>
-        <tbody>
-          ${pageItems.map(s => {
-            const isSelected = subsState.selected.has(s.id);
-            const rowClass = s.needsReview ? 'row-review' : s.late ? 'row-late' : '';
-            return `
-            <tr class="${rowClass} ${isSelected ? 'row-selected' : ''}">
-              <td class="td-check">
-                <input type="checkbox" data-subchk="${s.id}" ${isSelected ? 'checked' : ''} aria-label="Chọn bài của ${esc(s.studentName)}">
-              </td>
-              <td><strong>${esc(s.studentName)}</strong></td>
-              ${hasClass ? `<td>${esc(s.studentClass || '—')}</td>` : ''}
-              <td>${esc(s.testTitle)}</td>
-              <td><strong>${s.score}/${s.maxScore}</strong> <span class="muted small">(${s.maxScore ? Math.round(s.score / s.maxScore * 1000) / 10 : 0}%)</span></td>
-              <td>${s.late ? '<span class="pill late">Muộn</span>' : '<span class="small muted">—</span>'}</td>
-              <td class="small muted">${new Date(s.submittedAt).toLocaleString('vi-VN')}</td>
-              <td style="text-align:right; white-space:nowrap;">
-                ${s.needsReview ? '<span class="pill" style="margin-right:6px">cần chấm</span>' : ''}
-                <button class="sm" data-view="${s.id}">Xem bài</button>
-              </td>
-            </tr>`;
-          }).join('') || `<tr><td colspan="${hasClass ? 8 : 7}" class="muted" style="text-align:center;padding:var(--space-lg);">${isFiltered ? 'Không có bài nộp nào phù hợp bộ lọc.' : 'Chưa có bài nộp nào.'}</td></tr>`}
-        </tbody>
-      </table>
-    </div>
-
-    ${showPagination && total > 0 ? `
-    <div class="pagination-row">
-      <div class="small muted">
-        Hiển thị <strong>${total === 0 ? 0 : startIdx + 1}–${endIdx}</strong> trong <strong>${total}</strong> bài nộp
-        ${isFiltered ? ` (lọc từ ${list.length} bài)` : ''}
-      </div>
-      <div class="pagination-actions">
-        <label class="small muted" style="display:flex;align-items:center;gap:6px;">
-          <span>Mỗi trang:</span>
-          <select id="subPageSize" style="width:auto;padding:2px 8px;font-size:var(--text-sm);margin:0;">
-            <option value="10" ${subsState.pageSize == 10 ? 'selected' : ''}>10</option>
-            <option value="20" ${subsState.pageSize == 20 ? 'selected' : ''}>20</option>
-            <option value="50" ${subsState.pageSize == 50 ? 'selected' : ''}>50</option>
-            <option value="all" ${subsState.pageSize === 'all' ? 'selected' : ''}>Tất cả</option>
-          </select>
-        </label>
-        ${totalPages > 1 ? `
-        <div class="row" style="gap:4px;">
-          <button class="sm" id="subPrevPage" ${curPage <= 1 ? 'disabled' : ''}>← Trước</button>
-          <span class="small muted" style="padding:0 6px;align-self:center;">Trang <strong>${curPage}</strong> / ${totalPages}</span>
-          <button class="sm" id="subNextPage" ${curPage >= totalPages ? 'disabled' : ''}>Tiếp →</button>
-        </div>` : ''}
-      </div>
-    </div>` : ''}
-  `;
+  // 3. Render Pagination Area
+  const paginationArea = $('subPaginationArea');
+  if (paginationArea) {
+    paginationArea.innerHTML = showPagination && total > 0 ? `
+      <div class="pagination-row">
+        <div class="small muted">
+          Hiển thị <strong>${total === 0 ? 0 : startIdx + 1}–${endIdx}</strong> trong <strong>${total}</strong> bài nộp
+          ${isFiltered ? ` (lọc từ ${list.length} bài)` : ''}
+        </div>
+        <div class="pagination-actions">
+          <label class="small muted" style="display:flex;align-items:center;gap:6px;">
+            <span>Mỗi trang:</span>
+            <select id="subPageSize" style="width:auto;padding:2px 8px;font-size:var(--text-sm);margin:0;">
+              <option value="10" ${subsState.pageSize == 10 ? 'selected' : ''}>10</option>
+              <option value="20" ${subsState.pageSize == 20 ? 'selected' : ''}>20</option>
+              <option value="50" ${subsState.pageSize == 50 ? 'selected' : ''}>50</option>
+              <option value="all" ${subsState.pageSize === 'all' ? 'selected' : ''}>Tất cả</option>
+            </select>
+          </label>
+          ${totalPages > 1 ? `
+          <div class="row" style="gap:4px;">
+            <button class="sm" id="subPrevPage" ${curPage <= 1 ? 'disabled' : ''}>← Trước</button>
+            <span class="small muted" style="padding:0 6px;align-self:center;">Trang <strong>${curPage}</strong> / ${totalPages}</span>
+            <button class="sm" id="subNextPage" ${curPage >= totalPages ? 'disabled' : ''}>Tiếp →</button>
+          </div>` : ''}
+        </div>
+      </div>` : '';
+  }
 
   // Bind header checkbox
   const headCheck = $('checkAllSubs');
@@ -826,52 +890,6 @@ function updateSubsTable() {
       subsState.allFilteredSelected = false;
       $('detail').innerHTML = '';
       showSubmissions(subsState.testId, true);
-    };
-  }
-
-  // Bind toolbar inputs
-  const searchInput = $('subSearch');
-  searchInput.oninput = () => {
-    subsState.search = searchInput.value;
-    subsState.page = 1;
-    subsState.selected.clear();
-    subsState.allFilteredSelected = false;
-    updateSubsTable();
-  };
-
-  const statusSelect = $('subStatus');
-  statusSelect.onchange = () => {
-    subsState.filterStatus = statusSelect.value;
-    subsState.page = 1;
-    subsState.selected.clear();
-    subsState.allFilteredSelected = false;
-    updateSubsTable();
-  };
-
-  const classSelect = $('subClass');
-  if (classSelect) {
-    classSelect.onchange = () => {
-      subsState.filterClass = classSelect.value;
-      subsState.page = 1;
-      subsState.selected.clear();
-      subsState.allFilteredSelected = false;
-      updateSubsTable();
-    };
-  }
-
-  const resetBtn = $('subResetFilter');
-  if (resetBtn) {
-    resetBtn.onclick = () => {
-      subsState.search = '';
-      subsState.filterStatus = 'all';
-      subsState.filterClass = 'all';
-      subsState.page = 1;
-      subsState.selected.clear();
-      subsState.allFilteredSelected = false;
-      searchInput.value = '';
-      statusSelect.value = 'all';
-      if (classSelect) classSelect.value = 'all';
-      updateSubsTable();
     };
   }
 
