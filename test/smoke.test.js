@@ -308,6 +308,62 @@ test('API: thống kê theo câu hỏi — sai nhiều, chờ chấm tay, chấm
   await req('DELETE', '/api/admin/tests/' + testId);
 });
 
+/* ---------------- Integration: xoá nhiều bài nộp (batch delete) ---------------- */
+test('API: xoá nhiều bài nộp cùng lúc (batch-delete)', async (t) => {
+  const httpServer = mod.server;
+  await new Promise((resolve) => httpServer.listen(0, resolve));
+  t.after(() => new Promise((r) => httpServer.close(r)));
+  const base = `http://127.0.0.1:${httpServer.address().port}`;
+  const jar = {};
+  const req = async (method, p, body) => {
+    const headers = { 'Content-Type': 'application/json' };
+    if (jar.token) headers.Cookie = 'qs_token=' + jar.token;
+    const res = await fetch(base + p, {
+      method, headers, body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    const set = res.headers.get('set-cookie');
+    if (set) { const m = /qs_token=([a-f0-9]+)/.exec(set); if (m) jar.token = m[1]; }
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+
+  const login = await req('POST', '/api/login', { password: 'minmin' });
+  assert.equal(login.status, 200);
+
+  const created = await req('POST', '/api/admin/tests', {
+    title: 'Test Batch Delete', timeLimitMin: 0, published: true,
+    sections: [{
+      id: 's1', title: 'P1',
+      questions: [{ id: 'q1', type: 'true_false', prompt: '1+1=2', points: 1, correct: 'true' }],
+    }],
+  });
+  const testId = created.body.id;
+
+  const r1 = await req('POST', '/api/submit', { testId, studentName: 'Học viên A', answers: { q1: 'true' } });
+  const r2 = await req('POST', '/api/submit', { testId, studentName: 'Học viên B', answers: { q1: 'true' } });
+  const r3 = await req('POST', '/api/submit', { testId, studentName: 'Học viên C', answers: { q1: 'false' } });
+
+  const listBefore = (await req('GET', '/api/admin/submissions?testId=' + testId)).body;
+  assert.equal(listBefore.length, 3);
+
+  /* Xoá r1 và r2 cùng lúc */
+  const batchRes = await req('POST', '/api/admin/submissions/batch-delete', {
+    ids: [r1.body.id, r2.body.id],
+  });
+  assert.equal(batchRes.status, 200);
+  assert.equal(batchRes.body.ok, true);
+  assert.equal(batchRes.body.deleted, 2);
+
+  const listAfter = (await req('GET', '/api/admin/submissions?testId=' + testId)).body;
+  assert.equal(listAfter.length, 1);
+  assert.equal(listAfter[0].studentName, 'Học viên C');
+
+  /* Batch delete với danh sách rỗng -> 400 */
+  const emptyRes = await req('POST', '/api/admin/submissions/batch-delete', { ids: [] });
+  assert.equal(emptyRes.status, 400);
+
+  await req('DELETE', '/api/admin/tests/' + testId);
+});
+
 const { after } = require('node:test');
 after(() => {
   fs.rmSync(tmpDir, { recursive: true, force: true });

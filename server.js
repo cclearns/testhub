@@ -571,6 +571,20 @@ const server = http.createServer(async (req, res) => {
         if (testId) list = list.filter((s) => s.testId === testId);
         return send(res, 200, list.sort((a, b) => (a.submittedAt < b.submittedAt ? 1 : -1)));
       }
+      /* xoá nhiều bài nộp cùng lúc: { ids: ['id1', 'id2', ...] } */
+      if (api('POST', '/api/admin/submissions/batch-delete')) {
+        const { ids } = await readJson(req);
+        if (!Array.isArray(ids) || !ids.length) return send(res, 400, { error: 'Thiếu danh sách ID' });
+        const idSet = new Set(ids.map(String));
+        let deleted = 0;
+        await mutate(() => {
+          const all = subs();
+          const keep = all.filter((s) => !idSet.has(s.id));
+          deleted = all.length - keep.length;
+          saveSubs(keep);
+        });
+        return send(res, 200, { ok: true, deleted });
+      }
       if (req.method === 'DELETE' && /^\/api\/admin\/submissions\/\w+$/.test(p)) {
         const id = p.split('/').pop();
         await mutate(() => saveSubs(subs().filter((s) => s.id !== id)));

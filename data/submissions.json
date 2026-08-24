@@ -1,1 +1,290 @@
-[]
+[
+  {
+    "id": "0dabc856ae435df2",
+    "testId": "be16d9532d65b100",
+    "testTitle": "Tiếng Việt sơ cấp 2 — Số đếm, thời gian và mua sắm",
+    "submitId": "e6779bd7e9d8b5d5",
+    "studentName": "aaa",
+    "studentClass": "",
+    "startedAt": "2026-08-21T16:04:06.956Z",
+    "submittedAt": "2026-08-21T16:05:00.059Z",
+    "durationSec": 53,
+    "audioPlays": {},
+    "late": false,
+    "answers": {
+      "7da8d574": [
+        "5d69d9f7"
+      ],
+      "1a7fbe01": [
+        "626ecd4b"
+      ],
+      "59b6a05b": [
+        "hhh",
+        "tytytyt"
+      ],
+      "d06e3051": {
+        "def9baae": "143efb39",
+        "c0b62aac": "143efb39",
+        "5ff51f16": "3268b8f3"
+      },
+      "bce3c5e8": [
+        "aa4974d8"
+      ],
+      "e4bf4ea7": [
+        "0186bef1"
+      ],
+      "84e1ca85": "true",
+      "978e77ca": [
+        "7",
+        "7"
+      ],
+      "27bc6e69": [
+        "0a729b74",
+        "461b8ed7",
+        "50de1439"
+      ],
+      "1bd9033a": [
+        "a4069e7c"
+      ],
+      "3efe4471": "34",
+      "7ab13f0a": [
+        "6458b081"
+      ],
+      "94eeca3e": [
+        "1c45582d"
+      ],
+      "f7509ccc": "5656565"
+    },
+    "details": {
+      "7da8d574": {
+        "earned": 0,
+        "max": 1,
+        "correct": false,
+        "needsReview": false
+      },
+      "1a7fbe01": {
+        "earned": 0,
+        "max": 1,
+        "correct": false,
+        "needsReview": false
+      },
+      "59b6a05b": {
+        "earned": 0,
+        "max": 2,
+        "correct": false,
+        "needsReview": false
+      },
+      "d06e3051": {
+        "earned": 2,
+        "max": 3,
+        "correct": false,
+        "needsReview": false
+      },
+      "bce3c5e8": {
+        "earned": 1,
+        "max": 1,
+        "correct": true,
+        "needsReview": false
+      },
+      "e4bf4ea7": {
+        "earned": 0,
+        "max": 1,
+        "correct": false,
+        "needsReview": false
+      },
+      "84e1ca85": {
+        "earned": 1,
+        "max": 1,
+        "correct": true,
+        "needsReview": false
+      },
+      "978e77ca": {
+        "earned": 0,
+        "max": 2,
+        "correct": false,
+        "needsReview": false
+      },
+      "27bc6e69": {
+        "earned": 2,
+        "max": 2,
+        "correct": true,
+        "needsReview": false
+      },
+      "1bd9033a": {
+        "earned": 0,
+        "max": 1,
+        "correct": false,
+        "needsReview": false
+      },
+      "3efe4471": {
+        "earned": 0,
+        "max": 1,
+        "correct": false,
+        "needsReview": false
+      },
+      "7ab13f0a": {
+        "earned": 1,
+        "max": 1,
+        "correct": true,
+        "needsReview": false
+      },
+      "94eeca3e": {
+        "earned": 0,
+        "max": 2,
+        "correct": false,
+        "needsReview": false
+      },
+      "f7509ccc": {
+        "earned": 0,
+        "max": 3,
+        "correct": null,
+        "needsReview": true
+      }
+    },
+    "score": 7,
+    "maxScore": 22,
+    "needsReview": true
+  },
+  {
+    "id": "341199f440e6b159",
+    "testId": "be16d9532d65b100",
+    "testTitle": "Tiếng Việt sơ cấp 2 — Số đếm, thời gian và mua sắm",
+    "submitId": "8bae8d100b1fc799",
+    "studentName": "bbb",
+    "studentClass": "",
+    "startedAt": "2026-08-21T16:06:17.467Z",
+    "submittedAt": "2026-08-21T16:06:47.546Z",
+    "durationSec": 30,
+    "audioPlays": {},
+    "late": false,
+    "answers": {
+      "7da8d574": [
+        "86c54005"
+      ],
+      "1a7fbe01": [
+        "8b1a81bb"
+      ],
+      "59b6a05b": [
+        "34",
+        "454"
+      ],
+      "d06e3051": {
+        "def9baae": "48431c8d",
+        "c0b62aac": "143efb39",
+        "5ff51f16": "3268b8f3"
+      },
+      "bce3c5e8": [
+        "22d9cc68"
+      ],
+      "e4bf4ea7": [
+        "0186bef1"
+      ],
+      "84e1ca85": "true",
+      "27bc6e69": [
+        "0a729b74",
+        "461b8ed7",
+        "50de1439"
+      ],
+      "1bd9033a": [
+        "81bc6e98"
+      ],
+      "3efe4471": "4",
+      "7ab13f0a": [
+        "6458b081"
+      ],
+      "94eeca3e": [
+        "b995b585"
+      ],
+      "f7509ccc": "444"
+    },
+    "details": {
+      "7da8d574": {
+        "earned": 0,
+        "max": 1,
+        "correct": false,
+        "needsReview": false
+      },
+      "1a7fbe01": {
+        "earned": 1,
+        "max": 1,
+        "correct": true,
+        "needsReview": false
+      },
+      "59b6a05b": {
+        "earned": 0,
+        "max": 2,
+        "correct": false,
+        "needsReview": false
+      },
+      "d06e3051": {
+        "earned": 3,
+        "max": 3,
+        "correct": true,
+        "needsReview": false
+      },
+      "bce3c5e8": {
+        "earned": 0,
+        "max": 1,
+        "correct": false,
+        "needsReview": false
+      },
+      "e4bf4ea7": {
+        "earned": 0,
+        "max": 1,
+        "correct": false,
+        "needsReview": false
+      },
+      "84e1ca85": {
+        "earned": 1,
+        "max": 1,
+        "correct": true,
+        "needsReview": false
+      },
+      "978e77ca": {
+        "earned": 0,
+        "max": 2,
+        "correct": false,
+        "needsReview": false
+      },
+      "27bc6e69": {
+        "earned": 2,
+        "max": 2,
+        "correct": true,
+        "needsReview": false
+      },
+      "1bd9033a": {
+        "earned": 1,
+        "max": 1,
+        "correct": true,
+        "needsReview": false
+      },
+      "3efe4471": {
+        "earned": 0,
+        "max": 1,
+        "correct": false,
+        "needsReview": false
+      },
+      "7ab13f0a": {
+        "earned": 1,
+        "max": 1,
+        "correct": true,
+        "needsReview": false
+      },
+      "94eeca3e": {
+        "earned": 0,
+        "max": 2,
+        "correct": false,
+        "needsReview": false
+      },
+      "f7509ccc": {
+        "earned": 0,
+        "max": 3,
+        "correct": null,
+        "needsReview": true
+      }
+    },
+    "score": 9,
+    "maxScore": 22,
+    "needsReview": true
+  }
+]
