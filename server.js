@@ -334,8 +334,13 @@ function serveStatic(res, base, rel, extraHeaders = {}) {
   if (!file.startsWith(base)) return send(res, 403, 'Từ chối');
   fs.readFile(file, (err, buf) => {
     if (err) return send(res, 404, 'Không tìm thấy');
+    const isUpload = base === UPLOADS;
+    const cacheHeader = isUpload
+      ? { 'Cache-Control': 'public, max-age=86400' }
+      : { 'Cache-Control': 'no-cache, must-revalidate' };
     res.writeHead(200, {
       'Content-Type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream',
+      ...cacheHeader,
       ...extraHeaders,
     });
     res.end(buf);
