@@ -12,7 +12,68 @@ process.env.TEST_DATA_DIR = path.join(tmpDir, 'data');
 process.env.TEST_UPLOADS_DIR = path.join(tmpDir, 'uploads');
 
 const mod = require('../server.js');
-const { computeLate, gradeQuestion, sanitizeTest } = mod;
+const { computeLate, gradeQuestion, sanitizeTest, directAudioUrl, isPublicHttpUrl } = mod;
+
+/* ---------------- Chấm điểm từng phần: nối cặp & sắp xếp ---------------- */
+test('gradeQuestion: nối cặp chấm từng phần', () => {
+  const q = { type: 'matching', points: 4, pairs: { l1: 'r1', l2: 'r2', l3: 'r3', l4: 'r4' } };
+  assert.equal(gradeQuestion(q, { l1: 'r1', l2: 'r2', l3: 'r3', l4: 'r4' }).earned, 4);
+  assert.equal(gradeQuestion(q, { l1: 'r1', l2: 'r2', l3: 'sai', l4: '' }).earned, 2);
+  assert.equal(gradeQuestion(q, {}).correct, false);
+});
+
+test('gradeQuestion: sắp xếp thứ tự chấm theo đúng vị trí', () => {
+  const q = { type: 'ordering', points: 3, items: [{ id: 'a' }, { id: 'b' }, { id: 'c' }] };
+  assert.equal(gradeQuestion(q, ['a', 'b', 'c']).earned, 3);
+  assert.equal(gradeQuestion(q, ['a', 'c', 'b']).earned, 1);   // chỉ vị trí đầu đúng
+  assert.equal(gradeQuestion(q, []).earned, 0);
+});
+
+/* ---------------- Link bài nghe ---------------- */
+test('directAudioUrl: đổi link chia sẻ sang địa chỉ tải trực tiếp', () => {
+  assert.match(directAudioUrl('https://drive.google.com/file/d/1AbCdEfGhIjKl/view?usp=sharing'),
+    /drive\.usercontent\.google\.com\/download\?id=1AbCdEfGhIjKl/);
+  assert.equal(directAudioUrl('https://www.dropbox.com/s/abc/f.mp3?dl=0'),
+    'https://www.dropbox.com/s/abc/f.mp3?dl=1');
+  /* Link rút gọn của OneDrive không có sẵn dấu "?": nối chuỗi bằng tay sẽ ra
+     "…&download=1" — một link hỏng. Phải là "?download=1". */
+  assert.equal(directAudioUrl('https://1drv.ms/u/s!AbCdEf'),
+    'https://1drv.ms/u/s!AbCdEf?download=1');
+  assert.equal(directAudioUrl('https://vidu.com/bai-nghe.mp3'), 'https://vidu.com/bai-nghe.mp3');
+});
+
+test('isPublicHttpUrl: chặn địa chỉ nội bộ, kể cả viết kiểu IPv6', () => {
+  for (const u of ['http://localhost/a.mp3', 'http://127.0.0.1/a.mp3', 'http://192.168.1.5/a.mp3',
+    'http://172.16.0.1/a.mp3', 'http://10.0.0.1/a.mp3', 'http://0.0.0.0/a.mp3',
+    'http://[::1]:3000/a.mp3', 'http://[::ffff:127.0.0.1]/a.mp3', 'http://[fd00::1]/a.mp3',
+    'file:///etc/passwd']) {
+    assert.equal(isPublicHttpUrl(u), false, 'phải chặn: ' + u);
+  }
+  for (const u of ['https://vidu.com/a.mp3', 'http://8.8.8.8/a.mp3', 'http://[2606:4700::1111]/a.mp3']) {
+    assert.equal(isPublicHttpUrl(u), true, 'phải cho qua: ' + u);
+  }
+});
+
+/* ---------------- Lưu trữ: không được im lặng nuốt tệp hỏng ---------------- */
+test('store.read: thiếu tệp thì dùng mặc định, tệp hỏng thì báo lỗi chứ không ghi đè', () => {
+  const { store } = mod;
+  const f = path.join(process.env.TEST_DATA_DIR, 'thu-nghiem.json');
+
+  /* Lần chạy đầu: chưa có tệp -> giá trị mặc định. */
+  assert.deepEqual(store.read('thu-nghiem', []), []);
+
+  store.write('thu-nghiem', [{ id: 'a' }]);
+  assert.deepEqual(store.read('thu-nghiem', []), [{ id: 'a' }]);
+
+  /* Tệp hỏng: phải ném lỗi. Nếu lặng lẽ trả [] thì lần ghi kế tiếp sẽ xoá sạch
+     dữ liệu cũ — đúng kiểu mất ngân hàng đề mà không ai biết. */
+  const hong = '{loi: [[[';
+  fs.writeFileSync(f, hong);
+  assert.throws(() => store.read('thu-nghiem', []), /Không đọc được thu-nghiem.json/);
+  assert.equal(fs.readFileSync(f, 'utf8'), hong, 'tệp hỏng phải còn nguyên, không bị đè');
+
+  fs.unlinkSync(f);
+});
 
 /* ---------------- Pure: computeLate ---------------- */
 test('computeLate: không muộn khi chưa hết giờ', () => {

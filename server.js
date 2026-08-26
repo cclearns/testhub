@@ -24,7 +24,19 @@ for (const d of [DATA, UPLOADS]) fs.mkdirSync(d, { recursive: true });
 const store = {
   read(name, fallback) {
     const f = path.join(DATA, name + '.json');
-    try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return fallback; }
+    try {
+      return JSON.parse(fs.readFileSync(f, 'utf8'));
+    } catch (e) {
+      /* Chưa có tệp (lần chạy đầu) thì dùng giá trị mặc định. Nhưng tệp có mà
+         đọc không được — JSON hỏng, sai quyền, lỗi đĩa — thì phải báo lỗi thật:
+         lặng lẽ trả về [] sẽ khiến thao tác ghi ngay sau đó đè mất toàn bộ ngân
+         hàng đề (hoặc toàn bộ bài nộp) đang nằm trong tệp. */
+      if (e.code === 'ENOENT') return fallback;
+      throw new Error(
+        `Không đọc được ${name}.json (${e.message}). Đã dừng thao tác để không ` +
+        `ghi đè lên dữ liệu cũ — hãy sửa hoặc khôi phục tệp rồi thử lại.`,
+        { cause: e });
+    }
   },
   write(name, value) {
     const f = path.join(DATA, name + '.json');
@@ -52,6 +64,7 @@ const uid = () => crypto.randomBytes(8).toString('hex');
 /* ---------- phiên đăng nhập giáo viên ---------- */
 const sessions = new Map(); // token -> expiry
 const SESSION_MS = 12 * 60 * 60 * 1000;
+let failedLogins = 0;       // số lần nhập sai liên tiếp, xem ở /api/login
 
 /* Cho phép học viên nộp trễ một chút (mạng) mà không bị đánh dấu muộn.
    (= 60 giây) */
@@ -237,23 +250,44 @@ function directAudioUrl(url) {
   }
   if (/drive\.usercontent\.google\.com\/download/.test(u)) return u;
 
-  if (/dropbox\.com\//.test(u)) {
-    return u.replace(/([?&])dl=0/, '$1dl=1').replace(/(\?.*)?$/, m => (m && m.includes('dl=') ? m : (m ? m + '&dl=1' : '?dl=1')));
-  }
-  if (/onedrive\.live\.com|1drv\.ms/.test(u)) return u.includes('download') ? u : u + '&download=1';
+  /* Dropbox và OneDrive chỉ cần thêm một tham số vào link. Đặt bằng URL cho
+     chắc: nối chuỗi bằng tay sẽ ra "…&download=1" trên link chưa có dấu "?",
+     tức là link hỏng — đúng lỗi mà link rút gọn 1drv.ms hay dính. */
+  const setParam = (key, value) => {
+    try {
+      const x = new URL(u);
+      x.searchParams.set(key, value);
+      return x.toString();
+    } catch { return u; }
+  };
+  if (/dropbox\.com\//.test(u)) return setParam('dl', '1');
+  if (/onedrive\.live\.com|1drv\.ms/.test(u)) return setParam('download', '1');
   return u;
 }
 
 /* Chặn địa chỉ nội bộ — link chỉ do giáo viên đặt, nhưng vẫn kiểm tra. */
+const isPrivateIp = (ip) =>
+  ip === '0.0.0.0' || /^127\./.test(ip) || /^10\./.test(ip) || /^192\.168\./.test(ip)
+  || /^169\.254\./.test(ip) || /^172\.(1[6-9]|2\d|3[01])\./.test(ip);
+
 function isPublicHttpUrl(url) {
   let u;
   try { u = new URL(url); } catch { return false; }
   if (u.protocol !== 'https:' && u.protocol !== 'http:') return false;
   const h = u.hostname.toLowerCase();
-  if (h === 'localhost' || h.endsWith('.localhost') || h === '::1') return false;
-  if (/^127\./.test(h) || /^10\./.test(h) || /^192\.168\./.test(h) || /^169\.254\./.test(h)) return false;
-  if (/^172\.(1[6-9]|2\d|3[01])\./.test(h)) return false;
-  return true;
+  /* Địa chỉ IPv6 luôn kèm ngoặc vuông ("[::1]"), nên so thẳng với '::1' không
+     bao giờ khớp — localhost viết kiểu IPv6 từng lọt qua. */
+  if (h.startsWith('[')) {
+    const v6 = h.slice(1, -1);
+    if (v6 === '::1' || v6 === '::') return false;
+    if (/^f[cd]/.test(v6) || /^fe[89ab]/.test(v6)) return false;   // fc00::/7, fe80::/10
+    /* Dạng IPv4 viết trong IPv6 (::ffff:127.0.0.1, Node rút gọn thành
+       ::ffff:7f00:1) — chặn cả cụm, không ai phát bài nghe từ địa chỉ kiểu này. */
+    if (v6.startsWith('::ffff:')) return false;
+    return true;
+  }
+  if (h === 'localhost' || h.endsWith('.localhost')) return false;
+  return !isPrivateIp(h);
 }
 
 /* Phát tệp nghe: tệp đã tải lên thì đọc từ đĩa, link ngoài thì máy chủ tải hộ
@@ -331,7 +365,11 @@ const MIME = {
 };
 function serveStatic(res, base, rel, extraHeaders = {}) {
   const file = path.join(base, rel);
-  if (!file.startsWith(base)) return send(res, 403, 'Từ chối');
+  /* Phải nằm thực sự trong thư mục gốc: so bằng startsWith thì "…/public" cũng
+     khớp với "…/publicX". (URL đã chuẩn hoá ".." nên chưa khai thác được, nhưng
+     kiểm tra cho đúng vẫn hơn là dựa vào lớp bảo vệ ở xa.) */
+  const inside = path.relative(base, file);
+  if (inside.startsWith('..') || path.isAbsolute(inside)) return send(res, 403, 'Từ chối');
   fs.readFile(file, (err, buf) => {
     if (err) return send(res, 404, 'Không tìm thấy');
     const isUpload = base === UPLOADS;
@@ -357,7 +395,14 @@ const server = http.createServer(async (req, res) => {
     /* --- xác thực --- */
     if (api('POST', '/api/login')) {
       const { password } = await readJson(req);
-      if (password !== TEACHER_PASSWORD) return send(res, 401, { error: 'Mật khẩu không đúng' });
+      if (password !== TEACHER_PASSWORD) {
+        /* Sai càng nhiều lần liên tiếp thì chờ càng lâu (tối đa 5 giây): dò mật
+           khẩu bằng máy thành vô vọng, còn người gõ nhầm gần như không thấy. */
+        failedLogins++;
+        await new Promise((r) => setTimeout(r, Math.min(failedLogins * 400, 5000)));
+        return send(res, 401, { error: 'Mật khẩu không đúng' });
+      }
+      failedLogins = 0;
       const token = newSession();
       return send(res, 200, { ok: true }, {
         'Set-Cookie': `qs_token=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${SESSION_MS / 1000}`,
@@ -401,6 +446,8 @@ const server = http.createServer(async (req, res) => {
       const t = tests().find((x) => x.id === testId);
       const s = t && (t.sections || []).find((x) => x.id === sectionId);
       if (!s || !s.audio || !s.audio.url) return send(res, 404, 'Không có tệp nghe');
+      /* Đề đã đóng thì không phát bài nghe nữa — khớp với /api/tests/:id. */
+      if (!t.published && !isTeacher(req)) return send(res, 403, { error: 'Bài test chưa được mở' });
       return streamAudio(req, res, s.audio.url);
     }
 
@@ -438,7 +485,7 @@ const server = http.createServer(async (req, res) => {
 
         const sub = {
           id: uid(), testId: t.id, testTitle: t.title, submitId: body.submitId || null,
-          studentName: name, studentClass: String(body.studentClass || '').trim(),
+          studentName: name,
           startedAt: body.startedAt || null, submittedAt: new Date().toISOString(),
           durationSec: body.durationSec || null,
           audioPlays: body.audioPlays || {}, late, answers, ...g,
@@ -619,9 +666,9 @@ const server = http.createServer(async (req, res) => {
       if (api('GET', '/api/admin/export')) {
         const testId = url.searchParams.get('testId');
         const list = subs().filter((s) => !testId || s.testId === testId);
-        const rows = [['Họ tên', 'Lớp', 'Bài test', 'Điểm', 'Tổng điểm', '%', 'Muộn', 'Nộp lúc', 'Thời gian (phút)']];
+        const rows = [['Họ tên', 'Bài test', 'Điểm', 'Tổng điểm', '%', 'Muộn', 'Nộp lúc', 'Thời gian (phút)']];
         for (const s of list) {
-          rows.push([s.studentName, s.studentClass || '', s.testTitle, s.score, s.maxScore,
+          rows.push([s.studentName, s.testTitle, s.score, s.maxScore,
             s.maxScore ? Math.round((s.score / s.maxScore) * 1000) / 10 : 0,
             s.late ? 'Có' : '',
             s.submittedAt, s.durationSec ? Math.round(s.durationSec / 60) : '']);

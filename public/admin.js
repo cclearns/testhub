@@ -2,7 +2,27 @@
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const uid = () => Math.random().toString(16).slice(2, 10);
-const api = (url, opts) => fetch(url, opts).then(r => r.json());
+/* Mọi lời gọi API đi qua đây. Trước đây fetch hỏng (mất mạng, máy chủ trả về
+   không phải JSON) làm promise bị reject và trang đứng im không báo gì — giờ mọi
+   trục trặc đều quay về dạng { error } để chỗ gọi hiển thị như một lỗi bình thường. */
+async function api(url, opts) {
+  let r;
+  try {
+    r = await fetch(url, opts);
+  } catch {
+    return { error: 'Mất kết nối tới máy chủ. Kiểm tra mạng rồi thử lại.' };
+  }
+  /* Phiên 12 giờ hết hạn, hoặc máy chủ vừa khởi động lại (phiên nằm trong RAM). */
+  if (r.status === 401 && url.startsWith('/api/admin')) {
+    requireLogin();
+    return { error: 'Phiên đăng nhập đã hết hạn.' };
+  }
+  try {
+    return await r.json();
+  } catch {
+    return { error: `Máy chủ trả về dữ liệu không đọc được (mã ${r.status}).` };
+  }
+}
 
 const TYPES = {
   multiple_choice: 'Trắc nghiệm',
@@ -29,12 +49,25 @@ async function login() {
   enter();
 }
 function enter() {
+  $('loginErr').classList.add('hidden');
   $('loginView').classList.add('hidden');
   $('app').classList.remove('hidden');
   ['navTests', 'navSubs', 'logout'].forEach(id => $(id).classList.remove('hidden'));
   loadTests();
 }
 $('logout').onclick = async () => { await api('/api/logout', { method: 'POST' }); location.reload(); };
+
+/* Quay lại màn đăng nhập mà KHÔNG tải lại trang: đề đang soạn dở vẫn nằm nguyên
+   trên trang, đăng nhập lại là bấm “Lưu bài test” tiếp được, không mất công soạn. */
+function requireLogin() {
+  $('app').classList.add('hidden');
+  $('loginView').classList.remove('hidden');
+  ['navTests', 'navSubs', 'logout'].forEach(id => $(id).classList.add('hidden'));
+  $('loginErr').textContent = 'Phiên đăng nhập đã hết hạn. Đăng nhập lại để làm tiếp.';
+  $('loginErr').classList.remove('hidden');
+  $('pw').value = '';
+  $('pw').focus();
+}
 $('navTests').onclick = () => { show('testsView'); loadTests(); };
 $('navSubs').onclick = () => showSubmissions();
 function show(id) {
@@ -45,6 +78,10 @@ function show(id) {
 /* ---------- danh sách bài test ---------- */
 async function loadTests() {
   const list = await api('/api/admin/tests');
+  if (list.error) {
+    $('testList').innerHTML = `<div class="card notice err">${esc(list.error)}</div>`;
+    return;
+  }
   $('testList').innerHTML = list.length ? list.map(t => `
     <div class="entry">
       <div class="row">
@@ -504,7 +541,6 @@ const subsState = {
   list: [],
   search: '',
   filterStatus: 'all',
-  filterClass: 'all',
   sortCol: 'submittedAt',
   sortAsc: false,
   page: 1,
@@ -519,7 +555,6 @@ async function showSubmissions(testId, keepState = false) {
     subsState.testId = testId;
     subsState.search = '';
     subsState.filterStatus = 'all';
-    subsState.filterClass = 'all';
     subsState.sortCol = 'submittedAt';
     subsState.sortAsc = false;
     subsState.page = 1;
@@ -527,6 +562,10 @@ async function showSubmissions(testId, keepState = false) {
     subsState.allFilteredSelected = false;
   }
   const list = await api('/api/admin/submissions' + (testId ? '?testId=' + testId : ''));
+  if (list.error) {
+    $('subsView').innerHTML = `<div class="card notice err">${esc(list.error)}</div>`;
+    return;
+  }
   subsState.list = list;
 
   // Xoá những ID không còn tồn tại khỏi selected set
@@ -540,7 +579,7 @@ async function showSubmissions(testId, keepState = false) {
 }
 
 function getFilteredAndSortedSubmissions() {
-  const { list, search, filterStatus, filterClass, sortCol, sortAsc } = subsState;
+  const { list, search, filterStatus, sortCol, sortAsc } = subsState;
   let res = list;
 
   if (search.trim()) {
@@ -552,16 +591,10 @@ function getFilteredAndSortedSubmissions() {
   else if (filterStatus === 'late') res = res.filter(s => s.late);
   else if (filterStatus === 'completed') res = res.filter(s => !s.needsReview);
 
-  if (filterClass !== 'all') {
-    res = res.filter(s => (s.studentClass || '').trim() === filterClass);
-  }
-
   res = [...res].sort((a, b) => {
     let diff = 0;
     if (sortCol === 'studentName') {
       diff = (a.studentName || '').localeCompare(b.studentName || '', 'vi');
-    } else if (sortCol === 'studentClass') {
-      diff = (a.studentClass || '').localeCompare(b.studentClass || '', 'vi');
     } else if (sortCol === 'testTitle') {
       diff = (a.testTitle || '').localeCompare(b.testTitle || '', 'vi');
     } else if (sortCol === 'score') {
@@ -583,8 +616,7 @@ function renderSubmissionsView() {
   const { testId, list } = subsState;
   const avg = list.length
     ? Math.round(list.reduce((a, s) => a + (s.maxScore ? s.score / s.maxScore : 0), 0) / list.length * 1000) / 10 : 0;
-  const classes = [...new Set(list.map(s => (s.studentClass || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'));
-  const isFiltered = Boolean(subsState.search || subsState.filterStatus !== 'all' || subsState.filterClass !== 'all');
+  const isFiltered = Boolean(subsState.search || subsState.filterStatus !== 'all');
 
   $('subsView').innerHTML = `
     <div class="row" style="margin-bottom:14px">
@@ -611,13 +643,6 @@ function renderSubmissionsView() {
             <option value="completed" ${subsState.filterStatus === 'completed' ? 'selected' : ''}>Đã chấm xong (${list.filter(s => !s.needsReview).length})</option>
           </select>
         </div>
-        ${classes.length > 0 ? `
-        <div style="min-width:8rem;">
-          <select id="subClass" style="margin:0;">
-            <option value="all" ${subsState.filterClass === 'all' ? 'selected' : ''}>Tất cả lớp</option>
-            ${classes.map(c => `<option value="${esc(c)}" ${subsState.filterClass === c ? 'selected' : ''}>Lớp ${esc(c)}</option>`).join('')}
-          </select>
-        </div>` : ''}
         <button class="sm ghost" id="subResetFilter" style="display:${isFiltered ? 'inline-block' : 'none'};">Xoá lọc</button>
       </div>
       <div id="subBulkArea"></div>
@@ -645,29 +670,16 @@ function renderSubmissionsView() {
     updateSubsTable();
   };
 
-  const classSelect = $('subClass');
-  if (classSelect) {
-    classSelect.onchange = () => {
-      subsState.filterClass = classSelect.value;
-      subsState.page = 1;
-      subsState.selected.clear();
-      subsState.allFilteredSelected = false;
-      updateSubsTable();
-    };
-  }
-
   const resetBtn = $('subResetFilter');
   if (resetBtn) {
     resetBtn.onclick = () => {
       subsState.search = '';
       subsState.filterStatus = 'all';
-      subsState.filterClass = 'all';
       subsState.page = 1;
       subsState.selected.clear();
       subsState.allFilteredSelected = false;
       searchInput.value = '';
       statusSelect.value = 'all';
-      if (classSelect) classSelect.value = 'all';
       updateSubsTable();
     };
   }
@@ -678,8 +690,7 @@ function renderSubmissionsView() {
 function updateSubsTable() {
   const { list, testId, sortCol, sortAsc } = subsState;
   const filtered = getFilteredAndSortedSubmissions();
-  const hasClass = list.some(s => (s.studentClass || '').trim());
-  const isFiltered = Boolean(subsState.search || subsState.filterStatus !== 'all' || subsState.filterClass !== 'all');
+  const isFiltered = Boolean(subsState.search || subsState.filterStatus !== 'all');
 
   const resetBtn = $('subResetFilter');
   if (resetBtn) {
@@ -742,7 +753,6 @@ function updateSubsTable() {
                 <input type="checkbox" id="checkAllSubs" title="Chọn tất cả bài trên trang này" aria-label="Chọn tất cả">
               </th>
               <th class="th-sortable" data-sort="studentName">Họ tên ${sortIcon('studentName')}</th>
-              ${hasClass ? `<th class="th-sortable" data-sort="studentClass">Lớp ${sortIcon('studentClass')}</th>` : ''}
               <th class="th-sortable" data-sort="testTitle">Bài test ${sortIcon('testTitle')}</th>
               <th class="th-sortable" data-sort="score">Điểm ${sortIcon('score')}</th>
               <th class="th-sortable" data-sort="late">Muộn ${sortIcon('late')}</th>
@@ -760,7 +770,6 @@ function updateSubsTable() {
                   <input type="checkbox" data-subchk="${s.id}" ${isSelected ? 'checked' : ''} aria-label="Chọn bài của ${esc(s.studentName)}">
                 </td>
                 <td><strong>${esc(s.studentName)}</strong></td>
-                ${hasClass ? `<td>${esc(s.studentClass || '—')}</td>` : ''}
                 <td>${esc(s.testTitle)}</td>
                 <td><strong>${s.score}/${s.maxScore}</strong> <span class="muted small">(${s.maxScore ? Math.round(s.score / s.maxScore * 1000) / 10 : 0}%)</span></td>
                 <td>${s.late ? '<span class="pill late">Muộn</span>' : '<span class="small muted">—</span>'}</td>
@@ -770,7 +779,7 @@ function updateSubsTable() {
                   <button class="sm" data-view="${s.id}">Xem bài</button>
                 </td>
               </tr>`;
-            }).join('') || `<tr><td colspan="${hasClass ? 8 : 7}" class="muted" style="text-align:center;padding:var(--space-lg);">${isFiltered ? 'Không có bài nộp nào phù hợp bộ lọc.' : 'Chưa có bài nộp nào.'}</td></tr>`}
+            }).join('') || `<tr><td colspan="7" class="muted" style="text-align:center;padding:var(--space-lg);">${isFiltered ? 'Không có bài nộp nào phù hợp bộ lọc.' : 'Chưa có bài nộp nào.'}</td></tr>`}
           </tbody>
         </table>
       </div>`;
@@ -901,7 +910,7 @@ function updateSubsTable() {
         subsState.sortAsc = !subsState.sortAsc;
       } else {
         subsState.sortCol = col;
-        subsState.sortAsc = (col === 'studentName' || col === 'studentClass' || col === 'testTitle');
+        subsState.sortAsc = (col === 'studentName' || col === 'testTitle');
       }
       updateSubsTable();
     };

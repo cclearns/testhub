@@ -74,30 +74,83 @@ if (!student.name) location.href = 'index.html';
 
 const answers = {};      // qid -> đáp án
 const audioPlays = {};   // sectionId -> số lần đã nghe
-let test = null, submitId = null, startedAt = new Date().toISOString(), timerInt = null, submitted = false, remainingSec = 0;
+let test = null, submitId = null, startedAt = new Date().toISOString(),
+    deadline = null, timerInt = null, submitted = false, remainingSec = 0;
 
-fetch('/api/tests/' + testId).then(r => r.json()).then(t => {
+/* ---------- bản nháp giữ trong máy ----------
+   Cả lượt làm bài — đề đã nhận, mốc bắt đầu, hạn nộp, câu đã làm, số lượt đã
+   nghe — được ghi vào localStorage sau mỗi thay đổi. Lỡ tải lại trang, trình
+   duyệt điện thoại đóng tab nền, hay mất mạng giữa chừng thì mở lại vẫn làm tiếp
+   từ chỗ đang dở: cùng submitId nên nộp vẫn tính là một bài, và đồng hồ đếm theo
+   hạn nộp cũ chứ không được cấp thêm giờ. Nháp bị xoá khi nộp xong hoặc khi học
+   viên chủ động thoát. (Đề lưu ở đây là bản đã bỏ đáp án — không lộ thêm gì.) */
+const draftKey = 'bai_' + testId;
+const clearDraft = () => { try { localStorage.removeItem(draftKey); } catch { /* trình duyệt chặn */ } };
+const saveDraft = () => {
+  if (!test || submitted) return;
+  try {
+    localStorage.setItem(draftKey, JSON.stringify({ test, submitId, startedAt, deadline, answers, audioPlays }));
+  } catch { /* hết chỗ hoặc chế độ riêng tư — vẫn làm bài bình thường được */ }
+};
+const loadDraft = () => {
+  let d;
+  try { d = JSON.parse(localStorage.getItem(draftKey) || 'null'); } catch { return null; }
+  if (!d || !d.test) return null;
+  /* Hết giờ rồi (hoặc đề không giới hạn giờ nhưng bỏ dở quá 12 tiếng) thì coi như
+     lượt cũ đã khép lại — bỏ nháp, mở bài mới. */
+  const conHan = d.deadline
+    ? Date.parse(d.deadline) > Date.now()
+    : Date.now() - Date.parse(d.startedAt) < 12 * 60 * 60 * 1000;
+  if (!conHan) { clearDraft(); return null; }
+  return d;
+};
+
+const draft = loadDraft();
+fetch('/api/tests/' + testId).then(r => r.json()).catch(() => null).then(t => {
+  if (!t) {
+    /* Mất mạng đúng lúc mở lại trang: còn nháp thì vẫn làm tiếp được, nộp sau. */
+    if (draft) return begin(draft);
+    $('body').innerHTML = '<div class="card notice err">Không tải được đề. Kiểm tra kết nối rồi tải lại trang.</div>';
+    return;
+  }
+  /* Đề bị xoá hoặc bị đóng giữa chừng: báo lỗi, kể cả khi máy còn nháp. */
   if (t.error) { $('body').innerHTML = `<div class="card notice err">${esc(t.error)}</div>`; return; }
-  test = t;
-  submitId = t.submitId || null;   /* máy chủ phát mỗi lần mở bài, dùng tránh nộp trùng */
-  if (t.startedAt) startedAt = t.startedAt;   /* mốc bắt đầu do máy chủ phát — dùng tính độ muộn, không bị sai số đồng hồ */
-  render();
+  begin(draft || {
+    /* submitId + mốc bắt đầu đều do máy chủ phát: tránh nộp trùng, và tính độ
+       muộn theo đồng hồ máy chủ chứ không theo đồng hồ thiết bị. */
+    test: t, submitId: t.submitId || null,
+    startedAt: t.startedAt || new Date().toISOString(), deadline: t.deadline || null,
+  });
 });
+
+function begin(state) {
+  test = state.test;
+  submitId = state.submitId;
+  startedAt = state.startedAt;
+  deadline = state.deadline
+    || (test.timeLimitMin ? new Date(Date.now() + test.timeLimitMin * 60000).toISOString() : null);
+  Object.assign(answers, state.answers || {});
+  Object.assign(audioPlays, state.audioPlays || {});
+  render();
+  if (state === draft) $('info').insertAdjacentHTML('beforeend',
+    '<p class="notice">Đã khôi phục bài làm dở của bạn — đồng hồ vẫn tính từ lúc bắt đầu.</p>');
+}
 
 function render() {
   $('title').textContent = test.title;
   $('info').classList.remove('hidden');
   $('info').innerHTML = `
     ${test.description ? `<p class="lede">${esc(test.description)}</p>` : ''}
-    <p class="small muted">Thí sinh: <strong>${esc(student.name)}</strong>${student.cls ? ' · Lớp ' + esc(student.cls) : ''}</p>`;
+    <p class="small muted">Thí sinh: <strong>${esc(student.name)}</strong></p>`;
 
   $('body').innerHTML = test.sections.map(renderSection).join('');
   $('footer').classList.remove('hidden');
   wire();
+  restoreAnswers();
   updateProgress();
 
   /* Đếm ngược theo đồng hồ máy chủ (deadline) thay vì trình duyệt. */
-  if (test.timeLimitMin) startTimer(test.deadline || new Date(Date.now() + test.timeLimitMin * 60000).toISOString());
+  if (deadline) startTimer(deadline);
 
   $('submit').onclick = () => {
     const left = test.sections.flatMap(s => s.questions).filter(q => !isAnswered(q)).length;
@@ -126,7 +179,7 @@ function render() {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !$('exitBox').classList.contains('hidden')) $('exitNo').click();
   });
-  $('exitYes').onclick = () => { submitted = true; location.href = 'index.html'; };
+  $('exitYes').onclick = () => { submitted = true; clearDraft(); location.href = 'index.html'; };
 }
 
 function renderSection(s) {
@@ -275,13 +328,17 @@ function wire() {
     const au = box.querySelector('.au');
     const btn = box.querySelector('.play');
     const left = box.querySelector('.plays');
-    let remaining = section.audio.maxPlays || 1;
-    audioPlays[sid] = 0;
+    /* Nghe dở rồi tải lại trang thì không được cấp lại lượt: trừ số lần đã nghe. */
+    audioPlays[sid] = audioPlays[sid] || 0;
+    let remaining = Math.max(0, (section.audio.maxPlays || 1) - audioPlays[sid]);
+    left.textContent = remaining;
+    if (remaining <= 0) { btn.disabled = true; btn.textContent = 'Đã hết lượt nghe'; }
 
     btn.onclick = () => {
       if (remaining <= 0) return;
       remaining--; audioPlays[sid]++;
       left.textContent = remaining;
+      saveDraft();
       btn.disabled = true; btn.textContent = 'Đang phát…';
       au.currentTime = 0; au.play();
     };
@@ -290,6 +347,28 @@ function wire() {
       btn.disabled = remaining <= 0;
     };
     au.onerror = () => { btn.disabled = true; btn.textContent = 'Không tải được tệp âm thanh'; };
+  });
+}
+
+/* Đổ câu trả lời đã lưu (từ nháp) ngược lại vào các ô trên trang. */
+function restoreAnswers() {
+  document.querySelectorAll('[data-kind]').forEach(el => {
+    const a = answers[el.dataset.q];
+    if (a == null) return;
+    switch (el.dataset.kind) {
+      case 'mc': el.checked = [].concat(a).includes(el.value); break;
+      case 'tf': el.checked = String(a) === el.value; break;
+      case 'fb': el.value = a[Number(el.dataset.i)] || ''; break;
+      case 'sa': el.value = a; break;
+      case 'match': el.value = a[el.dataset.left] || ''; break;
+    }
+  });
+  document.querySelectorAll('.order').forEach(box => {
+    const order = answers[box.dataset.q];
+    if (!Array.isArray(order)) return;
+    const byId = new Map([...box.children].map(c => [c.dataset.id, c]));
+    order.forEach(id => { const it = byId.get(id); if (it) box.appendChild(it); });
+    [...box.children].forEach((c, i) => c.querySelector('.ord').textContent = i + 1);
   });
 }
 
@@ -305,6 +384,7 @@ function updateProgress() {
   const qs = test.sections.flatMap(s => s.questions);
   const done = qs.filter(isAnswered).length;
   $('progress').textContent = `Đã làm ${done}/${qs.length} câu`;
+  saveDraft();
 }
 
 function startTimer(deadline) {
@@ -324,7 +404,10 @@ function startTimer(deadline) {
       submit();
     }
   };
-  tick(); timerInt = setInterval(tick, 1000);
+  /* Gán timerInt TRƯỚC khi gọi tick: nếu tick đầu tiên đã thấy hết giờ, lệnh
+     clearInterval bên trong nó mới xoá đúng đồng hồ vừa tạo — trước đây nó xoá
+     đồng hồ cũ rồi setInterval bên dưới vẫn chạy, làm bài tự nộp thêm một lần. */
+  timerInt = setInterval(tick, 1000); tick();
 }
 
 async function submit() {
@@ -342,7 +425,10 @@ async function submit() {
     $('submit').textContent = 'Nộp bài';
     $('submitErrText').textContent = msg;
     $('submitErr').classList.remove('hidden');
-    if (test.timeLimitMin) startTimer(test.deadline);
+    /* Chỉ chạy lại đồng hồ khi CÒN giờ. Nộp hỏng đúng lúc hết giờ mà vẫn khởi
+       động lại thì tick đầu tiên thấy quá hạn sẽ gọi submit() ngay — hỏng tiếp,
+       rồi lại chạy đồng hồ: trang tự nộp lại vô hạn cho tới khi có mạng. */
+    if (deadline && Date.parse(deadline) > Date.now()) startTimer(deadline);
   };
 
   let r;
@@ -350,7 +436,7 @@ async function submit() {
     const resp = await fetch('/api/submit', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        testId, studentName: student.name, studentClass: student.cls,
+        testId, studentName: student.name,
         answers, startedAt, audioPlays, submitId,
         durationSec: Math.round((Date.now() - new Date(startedAt)) / 1000),
       }),
@@ -364,6 +450,7 @@ async function submit() {
 }
 
 function showResult(r) {
+  clearDraft();   /* nộp xong thì bỏ nháp — lần sau mở đề là một lượt mới */
   $('body').classList.add('hidden');
   $('footer').classList.add('hidden');
   $('timer').classList.add('hidden');

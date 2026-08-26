@@ -160,6 +160,10 @@ dán nội dung tệp.
   sau trên cùng máy). Không hỏi lớp.
 - Học viên **thoát giữa chừng** được (có hỏi xác nhận), và về trang chủ sau khi nộp.
 - Nộp bài hỏng do mất mạng thì báo lỗi ngay và cho **nộp lại**, không mất bài làm.
+- **Lỡ tải lại trang không mất bài**: bài làm dở được giữ trong máy học viên,
+  mở lại đề là làm tiếp từ chỗ đang dở — vẫn cùng một lượt nộp. Đồng hồ đếm
+  theo hạn cũ nên F5 không xin thêm được giờ, và lượt nghe đã dùng không được
+  cấp lại. Nháp bị xoá khi nộp xong hoặc khi học viên bấm “Thoát”.
 - **Xoá đề là xoá sạch**: bài nộp của đề đó và tệp nghe riêng của nó bị xoá theo;
   tệp nghe đang được đề khác dùng thì giữ lại. Hộp xác nhận nói rõ số bài nộp và
   số tệp sẽ mất trước khi xoá.
@@ -178,5 +182,7 @@ Atelier riêng của nó.
 ## Bảo mật
 
 Mật khẩu giáo viên gác toàn bộ API `/api/admin/*`; đáp án bị loại khỏi đề
-trước khi gửi cho học viên. Đây là mức đủ cho lớp học nội bộ — nếu đưa lên
+trước khi gửi cho học viên. Nhập sai mật khẩu bị làm chậm dần (tối đa 5 giây mỗi
+lần) nên không dò được bằng máy. Đề đã đóng thì học viên cũng không tải được tệp
+nghe của nó. Đây là mức đủ cho lớp học nội bộ — nếu đưa lên
 Internet công cộng, nên chạy sau HTTPS và đổi mật khẩu mặc định.
